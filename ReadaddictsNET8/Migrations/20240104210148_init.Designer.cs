@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ReadaddictsNET8.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240104141045_init")]
+    [Migration("20240104210148_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -275,7 +275,7 @@ namespace ReadaddictsNET8.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TierId")
+                    b.Property<int?>("TierId")
                         .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -552,9 +552,7 @@ namespace ReadaddictsNET8.Migrations
                 {
                     b.HasOne("Domain.Entities.Tier", "Tier")
                         .WithMany("Users")
-                        .HasForeignKey("TierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("TierId");
 
                     b.Navigation("Tier");
                 });

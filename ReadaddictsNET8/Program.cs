@@ -1,7 +1,9 @@
 using Application.Interfaces;
+using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
+using ReadaddictsNET8.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -19,6 +21,9 @@ builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddDbContext<ApplicationDbContext>();
 
 var app = builder.Build();
+
+app.AddPostsEndpoints();
+app.AddUsersEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

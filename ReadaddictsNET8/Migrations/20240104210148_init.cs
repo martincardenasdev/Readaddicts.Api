@@ -66,7 +66,7 @@ namespace ReadaddictsNET8.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     LastLogin = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    TierId = table.Column<int>(type: "int", nullable: false),
+                    TierId = table.Column<int>(type: "int", nullable: true),
                     Biography = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ProfilePicture = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -91,8 +91,7 @@ namespace ReadaddictsNET8.Migrations
                         name: "FK_AspNetUsers_Tiers_TierId",
                         column: x => x.TierId,
                         principalTable: "Tiers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(

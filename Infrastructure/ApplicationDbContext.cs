@@ -41,7 +41,7 @@ namespace Infrastructure
                 .HasMany(u => u.MessagesSent)
                 .WithOne(m => m.Sender)
                 .HasForeignKey(m => m.SenderId)
-                .OnDelete(DeleteBehavior.NoAction); 
+                .OnDelete(DeleteBehavior.NoAction);
 
             // User and received messages
             builder.Entity<User>()
