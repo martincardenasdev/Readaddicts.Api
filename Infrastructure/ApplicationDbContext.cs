@@ -5,8 +5,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration config) : IdentityDbContext<User>(options)
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration) : IdentityDbContext<User>(options)
     {
+        private readonly IConfiguration _config = configuration;
+
+        public new DbSet<User> Users { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Image> Images { get; set; }
@@ -17,7 +20,10 @@ namespace Infrastructure
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(config.GetConnectionString("DefaultConnection"));
+            optionsBuilder.UseSqlServer(
+                _config.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly("ReadaddictsNET8")
+                );
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -34,13 +40,15 @@ namespace Infrastructure
             builder.Entity<User>()
                 .HasMany(u => u.MessagesSent)
                 .WithOne(m => m.Sender)
-                .HasForeignKey(m => m.SenderId);
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.NoAction); 
 
             // User and received messages
             builder.Entity<User>()
                 .HasMany(u => u.MessagesReceived)
                 .WithOne(m => m.Receiver)
-                .HasForeignKey(m => m.ReceiverId);
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // User and comments
             builder.Entity<User>()
@@ -52,7 +60,11 @@ namespace Infrastructure
             builder.Entity<User>()
                 .HasMany(u => u.Groups)
                 .WithMany(g => g.Users)
-                .UsingEntity<UserGroup>();
+                .UsingEntity<UserGroup>(x =>
+                {
+                    x.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.NoAction);
+                    x.HasOne<Group>().WithMany().HasForeignKey(x => x.GroupId).OnDelete(DeleteBehavior.NoAction);
+                });
 
             // User creator and group
             builder.Entity<Group>()
@@ -76,7 +88,8 @@ namespace Infrastructure
             builder.Entity<Post>()
                 .HasMany(p => p.Comments)
                 .WithOne(c => c.Post)
-                .HasForeignKey(c => c.PostId);
+                .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Post and group
             builder.Entity<Post>()
@@ -88,7 +101,8 @@ namespace Infrastructure
             builder.Entity<Post>()
                 .HasMany(p => p.Images)
                 .WithOne(i => i.Post)
-                .HasForeignKey(i => i.PostId);
+                .HasForeignKey(i => i.PostId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Comment and parent comment
             builder.Entity<Comment>()

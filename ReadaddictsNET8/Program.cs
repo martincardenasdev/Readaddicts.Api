@@ -1,11 +1,15 @@
-//using Infrastructure;
+using Infrastructure;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddDbContext<ApplicationDbContext>();
+
 var app = builder.Build();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-//builder.Services.AddDbContext<ApplicationDbContext>();
 
 app.MapGet("/", () => "Hello World!");
 

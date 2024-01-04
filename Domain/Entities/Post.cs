@@ -3,7 +3,7 @@
     public class Post
     {
         public int PostId { get; set; }
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public DateTimeOffset Created { get; set; }
         public string Content { get; set; }
         public DateTimeOffset Modified { get; set; }

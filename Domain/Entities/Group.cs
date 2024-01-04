@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }
-        public int CreatorId { get; set; }
+        public string CreatorId { get; set; }
         public string? Picture { get; set; }
         public DateTimeOffset Created { get; set; }
         public ICollection<User>? Users { get; set; }
