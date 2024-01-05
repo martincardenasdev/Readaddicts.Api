@@ -11,11 +11,12 @@ namespace ReadaddictsNET8.Endpoints
             RouteGroupBuilder users = routes.MapGroup("/api/v1/users");
 
             users.MapPost("/register", Register);
+            users.MapPost("/login", Login);
             users.MapPost("/add-roles", AddRoles);
             users.MapDelete("/delete", Delete);
         }
 
-        public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager)
+        public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
         {
             var newUser = new User
             {
@@ -28,6 +29,7 @@ namespace ReadaddictsNET8.Endpoints
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(newUser, roleName);
+                await signInManager.SignInAsync(newUser, true);
 
                 return TypedResults.Ok(newUser);
             }
@@ -36,7 +38,7 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.BadRequest(errors);
         }
-        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>>> AddRoles (RoleManager<IdentityRole> roleManager)
+        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>>> AddRoles(RoleManager<IdentityRole> roleManager)
         {
             var admin = new IdentityRole("Admin");
             var moderator = new IdentityRole("Moderator");
@@ -72,6 +74,17 @@ namespace ReadaddictsNET8.Endpoints
 
             var errors = result.Errors.Select(error => error.Description);
             return TypedResults.BadRequest(errors);
+        }
+        public static async Task<Results<Ok<SignInResult>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager)
+        {
+            var result = await signInManager.PasswordSignInAsync(username, password, true, false);
+
+            if (result.Succeeded)
+            {
+                return TypedResults.Ok(result);
+            }
+
+            return TypedResults.Unauthorized();
         }
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ReadaddictsNET8.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240104210148_init")]
+    [Migration("20240105003147_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -168,11 +168,11 @@ namespace ReadaddictsNET8.Migrations
 
             modelBuilder.Entity("Domain.Entities.Post", b =>
                 {
-                    b.Property<int>("PostId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PostId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -184,14 +184,14 @@ namespace ReadaddictsNET8.Migrations
                     b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("Modified")
+                    b.Property<DateTimeOffset?>("Modified")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("PostId");
+                    b.HasKey("Id");
 
                     b.HasIndex("GroupId");
 

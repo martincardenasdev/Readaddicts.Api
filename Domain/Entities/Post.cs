@@ -2,11 +2,11 @@
 {
     public class Post
     {
-        public int PostId { get; set; }
+        public int Id { get; set; }
         public string UserId { get; set; }
         public DateTimeOffset Created { get; set; }
         public string Content { get; set; }
-        public DateTimeOffset Modified { get; set; }
+        public DateTimeOffset? Modified { get; set; }
         public int? GroupId { get; set; }
         public User Creator { get; set; }
         public ICollection<Comment>? Comments { get; set; }

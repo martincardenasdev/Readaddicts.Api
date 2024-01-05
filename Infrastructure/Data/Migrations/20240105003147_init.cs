@@ -233,17 +233,17 @@ namespace ReadaddictsNET8.Migrations
                 name: "Posts",
                 columns: table => new
                 {
-                    PostId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Modified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    Modified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     GroupId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Posts", x => x.PostId);
+                    table.PrimaryKey("PK_Posts", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Posts_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -312,7 +312,7 @@ namespace ReadaddictsNET8.Migrations
                         name: "FK_Comments_Posts_PostId",
                         column: x => x.PostId,
                         principalTable: "Posts",
-                        principalColumn: "PostId");
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -340,7 +340,7 @@ namespace ReadaddictsNET8.Migrations
                         name: "FK_Images_Posts_PostId",
                         column: x => x.PostId,
                         principalTable: "Posts",
-                        principalColumn: "PostId");
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(

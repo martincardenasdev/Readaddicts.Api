@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.csproj" />
+	  <!-- Fix IFormFile (The type or namespace name 'IFormFile' could not be found) -->
+	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
+	  <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
 </Project>

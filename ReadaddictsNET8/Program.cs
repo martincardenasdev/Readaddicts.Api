@@ -16,14 +16,19 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddAuthorization();
+builder.Services.AddAntiforgery();
+
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 
 builder.Services.AddDbContext<ApplicationDbContext>();
 
 var app = builder.Build();
 
+// Add endpoints
 app.AddPostsEndpoints();
 app.AddUsersEndpoints();
+app.AddAntiForgeryEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -33,5 +38,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseAntiforgery();
 
 app.Run();
