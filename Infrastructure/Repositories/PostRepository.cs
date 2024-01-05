@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ namespace Infrastructure.Repositories
     {
         private readonly ApplicationDbContext _context = context;
 
-        public async Task<int> CreatePost(string userId, int? groupId, Post post, IFormFileCollection? images)
+        public async Task<string> CreatePost(string userId, string? groupId, Post post, IFormFileCollection? images)
         {
             if (groupId is null)
             {
@@ -35,7 +36,7 @@ namespace Infrastructure.Repositories
 
             if (rowsAffected is 0)
             {
-                return 0;
+                return string.Empty;
             }
 
             return newPost.Id;
@@ -46,9 +47,17 @@ namespace Infrastructure.Repositories
             return await _context.Posts.FindAsync(id);
         }
 
-        public async Task<ICollection<Post>> GetPosts()
+        public async Task<ICollection<PostDto>> GetPosts()
         {
-            return await _context.Posts.ToListAsync();
+            return await _context.Posts
+                .Select(post => new PostDto
+                {
+                    Id = post.Id,
+                    UserId = post.UserId,
+                    Created = post.Created,
+                    Content = post.Content
+                })
+                .ToListAsync();
         }
     }
 }

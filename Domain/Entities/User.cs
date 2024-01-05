@@ -5,7 +5,7 @@ namespace Domain.Entities
     public class User : IdentityUser
     {
         public DateTimeOffset LastLogin { get; set; }
-        public int? TierId { get; set; }
+        public string? TierId { get; set; }
         public string? Biography { get; set; }
         public string? ProfilePicture { get; set; }
         public Tier? Tier { get; set; }

@@ -2,8 +2,8 @@
 {
     public class UserGroup
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string UserId { get; set; }
-        public int GroupId { get; set; }
+        public string GroupId { get; set; }
     }
 }

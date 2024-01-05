@@ -8,7 +8,7 @@ namespace Infrastructure
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration) : IdentityDbContext<User>(options)
     {
         private readonly IConfiguration _config = configuration;
-
+        // Add-Migration init -OutputDir Data/Migrations
         public new DbSet<User> Users { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Comment> Comments { get; set; }
@@ -20,10 +20,7 @@ namespace Infrastructure
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(
-                _config.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly("ReadaddictsNET8")
-                );
+            optionsBuilder.UseSqlServer(_config.GetConnectionString("DefaultConnection"));
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -109,6 +106,16 @@ namespace Infrastructure
                 .HasOne(c => c.Parent)
                 .WithMany(c => c.Children)
                 .HasForeignKey(c => c.ParentId);
+
+            // GUID
+            builder.Entity<User>().Property(u => u.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<Post>().Property(p => p.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<Comment>().Property(c => c.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<Image>().Property(i => i.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<Group>().Property(g => g.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<UserGroup>().Property(ug => ug.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<Message>().Property(m => m.Id).HasDefaultValueSql("NEWID()");
+            builder.Entity<Tier>().Property(t => t.Id).HasDefaultValueSql("NEWID()");
         }
     }
 }

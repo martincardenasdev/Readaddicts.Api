@@ -2,10 +2,10 @@
 {
     public class Comment
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string UserId { get; set; }
-        public int PostId { get; set; }
-        public int? ParentId { get; set; }
+        public string PostId { get; set; }
+        public string? ParentId { get; set; }
         public string Content { get; set; }
         public DateTimeOffset Created { get; set; }
         public DateTimeOffset Modified { get; set; }

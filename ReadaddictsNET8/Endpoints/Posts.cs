@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -18,9 +19,9 @@ namespace ReadaddictsNET8.Endpoints
             posts.MapPost("/create", CreatePost).RequireAuthorization();
         }
 
-        public static async Task<Results<Ok<ICollection<Post>>, NotFound>> GetAllPosts(IPostRepository postRepository)
+        public static async Task<Results<Ok<ICollection<PostDto>>, NotFound>> GetAllPosts(IPostRepository postRepository)
         {
-            ICollection<Post> posts = await postRepository.GetPosts();
+            ICollection<PostDto> posts = await postRepository.GetPosts();
 
             if (posts.Count is 0)
             {
@@ -40,13 +41,13 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok(post);
         }
-        public static async Task<Results<Ok<int>, BadRequest>> CreatePost(IPostRepository postRepository, ClaimsPrincipal user, [FromForm] Post post, [FromForm] IFormFileCollection? images, [FromForm] int? groupId)
+        public static async Task<Results<Ok<string>, BadRequest>> CreatePost(IPostRepository postRepository, ClaimsPrincipal user, [FromForm] Post post, [FromForm] IFormFileCollection? images, [FromForm] string? groupId)
         {
             string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-            int newPostId = await postRepository.CreatePost(userId, groupId, post, images);
+            string newPostId = await postRepository.CreatePost(userId, groupId, post, images);
 
-            if (newPostId is 0)
+            if (newPostId == string.Empty)
             {
                 return TypedResults.BadRequest();
             }
