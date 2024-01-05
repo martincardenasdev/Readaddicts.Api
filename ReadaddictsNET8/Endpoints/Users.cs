@@ -1,6 +1,8 @@
-﻿using Domain.Entities;
+﻿using Application.Abstractions;
+using Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace ReadaddictsNET8.Endpoints
@@ -78,7 +80,7 @@ namespace ReadaddictsNET8.Endpoints
             var errors = result.Errors.Select(error => error.Description);
             return TypedResults.BadRequest(errors);
         }
-        public static async Task<Results<Ok<SignInResult>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager)
+        public static async Task<Results<Ok<Microsoft.AspNetCore.Identity.SignInResult>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager)
         {
             var result = await signInManager.PasswordSignInAsync(username, password, true, false);
 
@@ -89,7 +91,7 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Unauthorized();
         }
-        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>, NotFound, UnauthorizedHttpResult>> Update(User newUser, ClaimsPrincipal user, string password, UserManager<User> userManager)
+        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>, NotFound, UnauthorizedHttpResult>> Update([FromForm] User newUser, [FromForm] string password, [FromForm] IFormFile? profilePicture, ClaimsPrincipal user, UserManager<User> userManager, [FromServices] ICloudinaryImage cloudinary)
         {
             // Still need to add profile picture change
             string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -122,6 +124,12 @@ namespace ReadaddictsNET8.Endpoints
                     IEnumerable<string> error = updateEmail.Errors.Select(error => error.Description);
                     return TypedResults.BadRequest(error);
                 }
+            }
+
+            if (profilePicture is not null)
+            {
+                var (imageUrl, _) = await cloudinary.Upload(profilePicture, 0, 0);
+                userToUpdate.ProfilePicture = imageUrl;
             }
 
             var result = await userManager.UpdateAsync(userToUpdate);

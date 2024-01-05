@@ -1,5 +1,8 @@
+using Application.Abstractions;
 using Application.Interfaces;
+using CloudinaryDotNet;
 using Domain.Entities;
+using dotenv.net;
 using Infrastructure;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -20,8 +23,16 @@ builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery();
 
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<ICloudinaryImage, CloudinaryRepository>();
 
 builder.Services.AddDbContext<ApplicationDbContext>();
+
+// Cloudinary
+DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+Cloudinary cloudinary = new(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+cloudinary.Api.Secure = true;
+
+builder.Services.AddSingleton(cloudinary);
 
 var app = builder.Build();
 
