@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace ReadaddictsNET8.Endpoints
 {
@@ -13,7 +14,9 @@ namespace ReadaddictsNET8.Endpoints
             users.MapPost("/register", Register);
             users.MapPost("/login", Login);
             users.MapPost("/add-roles", AddRoles);
-            users.MapDelete("/delete", Delete);
+            users.MapPatch("/update", Update);
+            users.MapPatch("/update-password", UpdatePassword).RequireAuthorization();
+            users.MapDelete("/delete", Delete).RequireAuthorization();
         }
 
         public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
@@ -85,6 +88,72 @@ namespace ReadaddictsNET8.Endpoints
             }
 
             return TypedResults.Unauthorized();
+        }
+        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>, NotFound, UnauthorizedHttpResult>> Update(User newUser, ClaimsPrincipal user, string password, UserManager<User> userManager)
+        {
+            // Still need to add profile picture change
+            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            User userToUpdate = await userManager.FindByIdAsync(userId);
+
+            if (userToUpdate is null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            bool validatePassword = await userManager.CheckPasswordAsync(userToUpdate, password);
+
+            if (!validatePassword)
+            {
+                return TypedResults.Unauthorized();
+            }
+
+            if (!string.IsNullOrWhiteSpace(newUser.Biography))
+            {
+                userToUpdate.Biography = newUser.Biography;
+            }
+
+            if (!string.IsNullOrWhiteSpace(newUser.Email))
+            {
+                IdentityResult updateEmail = await userManager.SetEmailAsync(userToUpdate, newUser.Email);
+
+                if (!updateEmail.Succeeded)
+                {
+                    IEnumerable<string> error = updateEmail.Errors.Select(error => error.Description);
+                    return TypedResults.BadRequest(error);
+                }
+            }
+
+            var result = await userManager.UpdateAsync(userToUpdate);
+
+            if (result.Succeeded)
+            {
+                return TypedResults.Ok();
+            }
+
+            IEnumerable<string> errors = result.Errors.Select(error => error.Description);
+            return TypedResults.BadRequest(errors);
+        }
+        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>, NotFound>> UpdatePassword(ClaimsPrincipal user, string currentPassword, string newPassword, UserManager<User> userManager)
+        {
+            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            User userToUpdate = await userManager.FindByIdAsync(userId);
+
+            if (userToUpdate is null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            var result = await userManager.ChangePasswordAsync(userToUpdate, currentPassword, newPassword);
+
+            if (result.Succeeded)
+            {
+                return TypedResults.Ok();
+            }
+
+            var errors = result.Errors.Select(error => error.Description);
+            return TypedResults.BadRequest(errors);
         }
     }
 }
