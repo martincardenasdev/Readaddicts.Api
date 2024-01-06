@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Abstractions;
+using Application.Interfaces;
 using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -6,9 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories
 {
-    public class PostRepository(ApplicationDbContext context) : IPostRepository
+    public class PostRepository(ApplicationDbContext context, ICloudinaryImage cloudinary) : IPostRepository
     {
         private readonly ApplicationDbContext _context = context;
+        private readonly ICloudinaryImage _cloudinary = cloudinary;
 
         public async Task<string> CreatePost(string userId, string? groupId, Post post, IFormFileCollection? images)
         {
@@ -128,9 +130,12 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<(bool, PostDto)> UpdatePost(string userId, Post post)
+        public async Task<(bool, PostDto)> UpdatePost(string id, string userId, string content, IFormFileCollection? images)
         {
-            var postToUpdate = await _context.FindAsync<Post>(post.Id);
+            Post? postToUpdate = await _context.Posts
+                .Include(post => post.Creator)
+                .Include(post => post.Images)
+                .FirstOrDefaultAsync(post => post.Id == id);
 
             if (postToUpdate is null)
             {
@@ -143,7 +148,29 @@ namespace Infrastructure.Repositories
             }
 
             // Here is what we want to update
-            postToUpdate.Content = post.Content;
+            if (!string.IsNullOrWhiteSpace(content))
+            {
+                postToUpdate.Content = content;
+            }
+
+            if (images is not null && images.Count > 0)
+            {
+                // Get a list of the images that were uploaded to Cloudinary and add them to the post
+                List<(string imageUrl, string publicId)> imgs = await _cloudinary.UploadMany(images);
+
+                List<Image> newPostImages = imgs.Select(image => new Image
+                {
+                    PostId = postToUpdate.Id,
+                    UserId = userId,
+                    Url = image.imageUrl,
+                    CloudinaryPublicId = image.publicId,
+                    Created = DateTimeOffset.UtcNow
+                }).ToList();
+
+                postToUpdate.Images.AddRange(newPostImages);
+            }
+
+            postToUpdate.Modified = DateTimeOffset.UtcNow;
 
             _context.Update(postToUpdate);
             int rowsAffected = await _context.SaveChangesAsync();

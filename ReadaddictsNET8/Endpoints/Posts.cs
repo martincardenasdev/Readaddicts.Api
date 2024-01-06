@@ -17,6 +17,7 @@ namespace ReadaddictsNET8.Endpoints
             posts.MapGet("/{id}", GetPost);
             posts.MapPost("/create", CreatePost).RequireAuthorization();
             posts.MapDelete("/{id}", DeletePost).RequireAuthorization();
+            posts.MapPatch("/{id}", UpdatePost).RequireAuthorization();
         }
 
         public static async Task<Results<Ok<ICollection<PostDto>>, NotFound>> GetAllPosts(IPostRepository postRepository)
@@ -66,6 +67,19 @@ namespace ReadaddictsNET8.Endpoints
             }
 
             return TypedResults.Ok();
+        }
+        public static async Task<Results<Ok<PostDto>, BadRequest>> UpdatePost(IPostRepository postRepository, ClaimsPrincipal user, [FromQuery] string? content, [FromForm] IFormFileCollection? images, string id)
+        {
+            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            (bool updated, PostDto postDto) = await postRepository.UpdatePost(id, userId, content, images);
+
+            if (!updated)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok(postDto);
         }
     }
 }

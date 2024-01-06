@@ -14,6 +14,6 @@ namespace Domain.Entities
         public User Creator { get; set; }
         public ICollection<Comment>? Comments { get; set; }
         public Group? Group { get; set; }
-        public ICollection<Image>? Images { get; set; }
+        public List<Image>? Images { get; set; }
     }
 }
