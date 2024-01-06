@@ -128,7 +128,7 @@ namespace ReadaddictsNET8.Endpoints
 
             if (profilePicture is not null)
             {
-                var (imageUrl, _) = await cloudinary.Upload(profilePicture, 0, 0);
+                var (imageUrl, _) = await cloudinary.Upload(profilePicture, 300, 300); // All profile pictures will be 300x300
                 userToUpdate.ProfilePicture = imageUrl;
             }
 
