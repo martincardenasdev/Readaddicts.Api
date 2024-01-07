@@ -8,6 +8,26 @@ namespace Infrastructure.Repositories
     public class CommentRepository(ApplicationDbContext context) : ICommentRepository
     {
         private readonly ApplicationDbContext _context = context;
+
+        public async Task<bool> DeleteComment(string userId, string commentId)
+        {
+            var comment = await _context.Comments
+                .Where(x => x.Id == commentId && x.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (comment is null)
+                return false;
+
+            // Get replies to delete them https://learn.microsoft.com/en-us/ef/core/saving/cascade-delete#database-cascade-limitations
+            var replies = await GetReplies(commentId);
+
+            _context.Comments.Remove(comment);
+
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            return rowsAffected > 0;
+        }
+
         public async Task<CommentDto?> GetComment(string commentId)
         {
             var replies = await GetReplies(commentId);
@@ -28,7 +48,8 @@ namespace Infrastructure.Repositories
                         UserName = x.User.UserName,
                         ProfilePicture = x.User.ProfilePicture
                     },
-                    Children = replies
+                    Children = replies,
+                    ReplyCount = replies.Count
                 }).FirstOrDefaultAsync();
         }
 
@@ -55,7 +76,8 @@ namespace Infrastructure.Repositories
                         UserName = reply.User.UserName,
                         ProfilePicture = reply.User.ProfilePicture
                     },
-                    Children = await GetReplies(reply.Id)
+                    Children = await GetReplies(reply.Id),
+                    ReplyCount = await _context.Comments.CountAsync(x => x.ParentId == reply.Id)
                 };
 
                 comments.Add(replyDto);
@@ -95,6 +117,34 @@ namespace Infrastructure.Repositories
                 UserId = newComment.UserId,
                 Content = newComment.Content,
                 Created = newComment.Created
+            };
+        }
+
+        public async Task<CommentDto> UpdateComment(string userId, string commentId, string content)
+        {
+            var comment = await _context.Comments
+                .Where(x => x.Id == commentId && x.UserId == userId)
+                .FirstOrDefaultAsync();
+
+            if (comment is null)
+                return null;
+
+            comment.Content = content;
+            comment.Modified = DateTimeOffset.UtcNow;
+
+            _context.Comments.Update(comment);
+
+            int rowsAffected = _context.SaveChanges();
+
+            if (rowsAffected == 0)
+                return null;
+
+            return new CommentDto
+            {
+                Id = comment.Id,
+                UserId = comment.UserId,
+                Content = comment.Content,
+                Created = comment.Created
             };
         }
     }

@@ -12,7 +12,9 @@ namespace ReadaddictsNET8.Endpoints
             RouteGroupBuilder comments = routes.MapGroup("/api/v1/comments");
 
             comments.MapGet("/{id}", GetComment);
-            comments.MapPost("/", CreateComment);
+            comments.MapPost("/", CreateComment).RequireAuthorization();
+            comments.MapPatch("/{id}", UpdateComment).RequireAuthorization();
+            comments.MapDelete("/{id}", DeleteComment).RequireAuthorization();
         }
 
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -32,6 +34,23 @@ namespace ReadaddictsNET8.Endpoints
             CommentDto newComment = await commentRepository.NewComment(GetUserId(user), comment, postId, parentId);
 
             return TypedResults.Ok(newComment);
+        }
+        public static async Task<Results<Ok<CommentDto>, BadRequest>> UpdateComment(ICommentRepository commentRepository, ClaimsPrincipal user, string id, string content)
+        {
+            CommentDto updatedComment = await commentRepository.UpdateComment(GetUserId(user), id, content);
+
+            return TypedResults.Ok(updatedComment);
+        }
+        public static async Task<Results<Ok, BadRequest>> DeleteComment(ICommentRepository commentRepository, ClaimsPrincipal user, string id)
+        {
+            bool deleted = await commentRepository.DeleteComment(GetUserId(user), id);
+
+            if (!deleted)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok();
         }
     }
 }

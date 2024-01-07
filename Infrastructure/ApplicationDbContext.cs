@@ -105,7 +105,14 @@ namespace Infrastructure
             builder.Entity<Comment>()
                 .HasOne(c => c.Parent)
                 .WithMany(c => c.Children)
-                .HasForeignKey(c => c.ParentId);
+                .HasForeignKey(c => c.ParentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Comment>()
+                .HasMany(c => c.Children)
+                .WithOne(c => c.Parent)
+                .HasForeignKey(c => c.ParentId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // GUID
             builder.Entity<User>().Property(u => u.Id).HasDefaultValueSql("NEWID()");
