@@ -4,7 +4,6 @@ using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 
 namespace Infrastructure.Repositories
 {
@@ -117,7 +116,7 @@ namespace Infrastructure.Repositories
                     Content = post.Content,
                     Creator = new UserDto
                     {
-                        UserId = post.Creator.Id,
+                        Id = post.Creator.Id,
                         UserName = post.Creator.UserName,
                         ProfilePicture = post.Creator.ProfilePicture
                     },
@@ -150,7 +149,7 @@ namespace Infrastructure.Repositories
                     Content = post.Content,
                     Creator = new UserDto
                     {
-                        UserId = post.Creator.Id,
+                        Id = post.Creator.Id,
                         UserName = post.Creator.UserName,
                         ProfilePicture = post.Creator.ProfilePicture
                     },
@@ -191,7 +190,7 @@ namespace Infrastructure.Repositories
                 Content = post.Content,
                 Creator = new UserDto
                 {
-                    UserId = post.Creator.Id,
+                    Id = post.Creator.Id,
                     UserName = post.Creator.UserName,
                     ProfilePicture = post.Creator.ProfilePicture
                 },

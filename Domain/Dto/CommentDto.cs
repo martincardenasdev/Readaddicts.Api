@@ -8,5 +8,6 @@
         public DateTimeOffset Created { get; set; }
         public UserDto User { get; set; }
         public int ReplyCount { get; set; }
+        public ICollection<CommentDto> Children { get; set; }
     }
 }

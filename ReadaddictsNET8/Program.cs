@@ -24,6 +24,7 @@ builder.Services.AddAntiforgery();
 
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ICloudinaryImage, CloudinaryRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 builder.Services.AddDbContext<ApplicationDbContext>();
 
@@ -37,9 +38,10 @@ builder.Services.AddSingleton(cloudinary);
 var app = builder.Build();
 
 // Add endpoints
+app.AddAntiForgeryEndpoints();
 app.AddPostsEndpoints();
 app.AddUsersEndpoints();
-app.AddAntiForgeryEndpoints();
+app.AddCommentsEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
