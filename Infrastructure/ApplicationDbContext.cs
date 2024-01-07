@@ -8,6 +8,7 @@ namespace Infrastructure
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IConfiguration configuration) : IdentityDbContext<User>(options)
     {
         private readonly IConfiguration _config = configuration;
+
         // Add-Migration init -OutputDir Data/Migrations
         public new DbSet<User> Users { get; set; }
         public DbSet<Post> Posts { get; set; }
@@ -20,7 +21,10 @@ namespace Infrastructure
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(_config.GetConnectionString("DefaultConnection"));
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(_config.GetConnectionString("DefaultConnection"));
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

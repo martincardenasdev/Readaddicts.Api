@@ -23,6 +23,11 @@ namespace Infrastructure.Repositories
                 post.GroupId = groupId;
             }
 
+            if (string.IsNullOrWhiteSpace(post.Content))
+            {
+                return string.Empty;
+            }
+
             var newPost = new Post
             {
                 UserId = userId,
@@ -137,7 +142,7 @@ namespace Infrastructure.Repositories
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<ICollection<PostDto>> GetPosts()
+        public async Task<List<PostDto>> GetPosts()
         {
             return await _context.Posts
                 .Include(post => post.Creator)
@@ -212,6 +217,11 @@ namespace Infrastructure.Repositories
 
             // Get a list of the images that were uploaded to Cloudinary and add them to the post
             List<(string imageUrl, string publicId)> imgs = await _cloudinary.UploadMany(images);
+
+            if (imgs.Count == 0)
+            {
+                return [];
+            }
 
             List<Image> newPostImages = imgs.Select(image => new Image
             {
