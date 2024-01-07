@@ -4,6 +4,7 @@ using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 namespace Infrastructure.Repositories
 {
@@ -42,6 +43,39 @@ namespace Infrastructure.Repositories
             }
 
             return newPost.Id;
+        }
+
+        public async Task<(IEnumerable<string> deleted, IEnumerable<string> notDeleted)> DeleteImageFromPost(string postId, string userId, List<string> imageIds)
+        {
+            var post = await _context.FindAsync<Post>(postId);
+
+            if (post is null || post.UserId != userId)
+                return (Enumerable.Empty<string>(), Enumerable.Empty<string>());
+
+            List<Image> imagesToDelete = await _context.Images
+                .Where(i => imageIds.Contains(i.Id) && i.PostId == postId && i.UserId == userId)
+                .ToListAsync();
+
+            // where errors its a list of the publicIds that failed to be deleted (if any)
+            var (deleted, notDeleted) = await _cloudinary.Destroy(imagesToDelete);
+
+            // after deleting from cloudinary delete from db, but exclude the images that failed to be deleted from cloudinary (if any)
+            List<Image> newImagesToDelete = imagesToDelete
+                .Where(image => !notDeleted.Contains(image.CloudinaryPublicId))
+                .ToList();
+
+            _context.RemoveRange(newImagesToDelete);
+
+            post.Modified = DateTimeOffset.UtcNow;
+
+            _context.Update(post);
+
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            if (rowsAffected is 0)
+                return (Enumerable.Empty<string>(), notDeleted);
+
+            return (deleted, notDeleted);
         }
 
         public async Task<bool> DeletePost(string userId, string postId)
@@ -130,75 +164,81 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<(bool, PostDto)> UpdatePost(string id, string userId, string content, IFormFileCollection? images)
+        public async Task<(bool, PostDto)> UpdatePostContent(string postId, string userId, string content)
         {
-            Post? postToUpdate = await _context.Posts
+            Post? post = await _context.Posts
                 .Include(post => post.Creator)
                 .Include(post => post.Images)
-                .FirstOrDefaultAsync(post => post.Id == id);
+                .FirstOrDefaultAsync(post => post.Id == postId);
 
-            if (postToUpdate is null)
-            {
+            if (post is null || post.UserId != userId)
                 return (false, new PostDto());
-            }
 
-            if (postToUpdate.UserId != userId)
-            {
-                return (false, new PostDto());
-            }
+            post.Content = content;
+            post.Modified = DateTimeOffset.UtcNow;
 
-            // Here is what we want to update
-            if (!string.IsNullOrWhiteSpace(content))
-            {
-                postToUpdate.Content = content;
-            }
-
-            if (images is not null && images.Count > 0)
-            {
-                // Get a list of the images that were uploaded to Cloudinary and add them to the post
-                List<(string imageUrl, string publicId)> imgs = await _cloudinary.UploadMany(images);
-
-                List<Image> newPostImages = imgs.Select(image => new Image
-                {
-                    PostId = postToUpdate.Id,
-                    UserId = userId,
-                    Url = image.imageUrl,
-                    CloudinaryPublicId = image.publicId,
-                    Created = DateTimeOffset.UtcNow
-                }).ToList();
-
-                postToUpdate.Images.AddRange(newPostImages);
-            }
-
-            postToUpdate.Modified = DateTimeOffset.UtcNow;
-
-            _context.Update(postToUpdate);
+            _context.Update(post);
             int rowsAffected = await _context.SaveChangesAsync();
 
             if (rowsAffected is 0)
-            {
                 return (false, new PostDto());
-            }
 
             return (true, new PostDto
             {
-                Id = postToUpdate.Id,
-                UserId = postToUpdate.UserId,
-                Created = postToUpdate.Created,
-                Content = postToUpdate.Content,
+                Id = post.Id,
+                UserId = post.UserId,
+                Created = post.Created,
+                Content = post.Content,
                 Creator = new UserDto
                 {
-                    UserId = postToUpdate.Creator.Id,
-                    UserName = postToUpdate.Creator.UserName,
-                    ProfilePicture = postToUpdate.Creator.ProfilePicture
+                    UserId = post.Creator.Id,
+                    UserName = post.Creator.UserName,
+                    ProfilePicture = post.Creator.ProfilePicture
                 },
-                Images = postToUpdate.Images.Select(image => new ImageDto
+                Images = post.Images.Select(image => new ImageDto
                 {
                     Id = image.Id,
                     Url = image.Url
                 }).ToList(),
-                CommentCount = _context.Comments.Count(comment => comment.PostId == postToUpdate.Id)
+                CommentCount = _context.Comments.Count(comment => comment.PostId == post.Id)
             });
+        }
+
+        public async Task<IEnumerable<ImageDto>> AddImagesToPost(string postId, string userId, IFormFileCollection images)
+        {
+            var post = await _context.FindAsync<Post>(postId);
+
+            if (post is null || post.UserId != userId)
+                return [];
+
+            // Get a list of the images that were uploaded to Cloudinary and add them to the post
+            List<(string imageUrl, string publicId)> imgs = await _cloudinary.UploadMany(images);
+
+            List<Image> newPostImages = imgs.Select(image => new Image
+            {
+                PostId = postId,
+                UserId = userId,
+                Url = image.imageUrl,
+                CloudinaryPublicId = image.publicId,
+                Created = DateTimeOffset.UtcNow
+            }).ToList();
+
+            _context.Images.AddRange(newPostImages);
+
+            post.Modified = DateTimeOffset.UtcNow;
+
+            _context.Update(post);
+
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            if (rowsAffected is 0)
+                return [];
+
+            return newPostImages.Select(i => new ImageDto
+            {
+                Id = i.Id,
+                Url = i.Url
+            }).ToList();
         }
     }
 }

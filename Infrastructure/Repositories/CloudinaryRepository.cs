@@ -1,19 +1,40 @@
 ﻿using Application.Abstractions;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Repositories
 {
     public class CloudinaryRepository(Cloudinary cloudinary) : ICloudinaryImage
     {
-        public async Task<(string imageUrl, string publicId)> Upload(IFormFile image, int width, int height)
+        public async Task<(IEnumerable<string> deleted, IEnumerable<string> notDeleted)> Destroy(List<Image> images)
         {
-            if (image is null)
+            // Try to delete an image one by one and add the publicId to the corresponding list based on the result
+            ICollection<string> failedDeletions = [];
+            ICollection<string> successfulDeletions = [];   
+
+            foreach (var image in images)
             {
-                return (null, null);
+                DeletionParams deletionParams = new(image.CloudinaryPublicId);
+
+                var delete = await cloudinary.DestroyAsync(deletionParams);
+
+                if (delete.Result == "ok")
+                {
+                    successfulDeletions.Add(image.CloudinaryPublicId);
+                }
+                else
+                {
+                    failedDeletions.Add(image.CloudinaryPublicId);
+                }
             }
 
+            return (successfulDeletions, failedDeletions);
+        }
+
+        public async Task<(string imageUrl, string publicId)> Upload(IFormFile image, int width, int height)
+        {
             await using var stream = image.OpenReadStream();
 
             ImageUploadParams uploadParams = new()
@@ -42,11 +63,6 @@ namespace Infrastructure.Repositories
 
         public async Task<List<(string imageUrl, string publicId)>> UploadMany(IFormFileCollection images)
         {
-            if (images is null && images?.Count <= 0)
-            {
-                return null;
-            }
-
             List<(string imageUrl, string publicId)> imageUrls = [];
 
             foreach (var image in images)

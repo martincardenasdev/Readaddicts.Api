@@ -17,8 +17,12 @@ namespace ReadaddictsNET8.Endpoints
             posts.MapGet("/{id}", GetPost);
             posts.MapPost("/create", CreatePost).RequireAuthorization();
             posts.MapDelete("/{id}", DeletePost).RequireAuthorization();
-            posts.MapPatch("/{id}", UpdatePost).RequireAuthorization();
+            posts.MapPatch("/{id}", UpdatePostContent).RequireAuthorization();
+            posts.MapPatch("/{id}/images/add", AddImagesToPost).RequireAuthorization();
+            posts.MapPatch("/{id}/images/delete", DeleteImageFromPost).RequireAuthorization();
         }
+
+        private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
 
         public static async Task<Results<Ok<ICollection<PostDto>>, NotFound>> GetAllPosts(IPostRepository postRepository)
         {
@@ -44,9 +48,7 @@ namespace ReadaddictsNET8.Endpoints
         }
         public static async Task<Results<Ok<string>, BadRequest>> CreatePost(IPostRepository postRepository, ClaimsPrincipal user, [FromForm] Post post, [FromForm] IFormFileCollection? images, [FromForm] string? groupId)
         {
-            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
-
-            string newPostId = await postRepository.CreatePost(userId, groupId, post, images);
+            string newPostId = await postRepository.CreatePost(GetUserId(user), groupId, post, images);
 
             if (newPostId == string.Empty)
             {
@@ -57,9 +59,7 @@ namespace ReadaddictsNET8.Endpoints
         }
         public static async Task<Results<Ok, BadRequest>> DeletePost(IPostRepository postRepository, ClaimsPrincipal user, string id)
         {
-            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
-
-            bool deleted = await postRepository.DeletePost(userId, id);
+            bool deleted = await postRepository.DeletePost(GetUserId(user), id);
 
             if (!deleted)
             {
@@ -68,11 +68,9 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok();
         }
-        public static async Task<Results<Ok<PostDto>, BadRequest>> UpdatePost(IPostRepository postRepository, ClaimsPrincipal user, [FromQuery] string? content, [FromForm] IFormFileCollection? images, string id)
+        public static async Task<Results<Ok<PostDto>, BadRequest>> UpdatePostContent(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromQuery] string content)
         {
-            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
-
-            (bool updated, PostDto postDto) = await postRepository.UpdatePost(id, userId, content, images);
+            (bool updated, PostDto postDto) = await postRepository.UpdatePostContent(id, GetUserId(user), content);
 
             if (!updated)
             {
@@ -80,6 +78,33 @@ namespace ReadaddictsNET8.Endpoints
             }
 
             return TypedResults.Ok(postDto);
+        }
+        public static async Task<Results<Ok<IEnumerable<ImageDto>>, BadRequest>> AddImagesToPost(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromForm] IFormFileCollection images)
+        {
+            var uploadedImages = await postRepository.AddImagesToPost(id, GetUserId(user), images);
+
+            if (!uploadedImages.Any())
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok(uploadedImages);
+        }
+        public static async Task<Results<Ok<IEnumerable<string>>, BadRequest<IEnumerable<string>>>> DeleteImageFromPost(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromBody] List<string> imageIds)
+        {
+            var (deleted, notDeleted) = await postRepository.DeleteImageFromPost(id, GetUserId(user), imageIds);
+
+            if (notDeleted.Any() && deleted.Any())
+            {
+                return TypedResults.Ok(notDeleted);
+            }
+
+            if (notDeleted.Any() && !deleted.Any())
+            {
+                return TypedResults.BadRequest(notDeleted);
+            }
+             
+            return TypedResults.Ok(deleted);
         }
     }
 }

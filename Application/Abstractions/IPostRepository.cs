@@ -10,6 +10,8 @@ namespace Application.Interfaces
         Task<PostDto?> GetPost(string id);
         Task<string> CreatePost(string userId, string? groupId, Post post, IFormFileCollection? images);
         Task<bool> DeletePost(string userId, string postId);
-        Task<(bool, PostDto)> UpdatePost(string id, string userId, string content, IFormFileCollection? images);
+        Task<(bool, PostDto)> UpdatePostContent(string postId, string userId, string content);
+        Task<IEnumerable<ImageDto>> AddImagesToPost(string postId, string userId, IFormFileCollection images);
+        Task<(IEnumerable<string> deleted, IEnumerable<string> notDeleted)> DeleteImageFromPost(string postId, string userId, List<string> imageIds);
     }
 }
