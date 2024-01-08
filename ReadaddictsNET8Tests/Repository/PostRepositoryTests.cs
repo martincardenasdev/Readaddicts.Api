@@ -14,10 +14,10 @@ namespace ReadaddictsNET8Tests.Repository
 {
     public class PostRepositoryTests
     {
-        private readonly Mock<ICloudinaryImage> _cloudinaryMock;
+        private readonly Mock<ICloudinaryRepository> _cloudinaryMock;
         public PostRepositoryTests()
         {
-            _cloudinaryMock = new Mock<ICloudinaryImage>();
+            _cloudinaryMock = new Mock<ICloudinaryRepository>();
         }
 
         private static DbContextOptions<ApplicationDbContext> GetInMemoryDatabaseOptions

@@ -23,7 +23,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery();
 
 builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<ICloudinaryImage, CloudinaryRepository>();
+builder.Services.AddScoped<ICloudinaryRepository, CloudinaryRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 builder.Services.AddDbContext<ApplicationDbContext>();

@@ -7,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories
 {
-    public class PostRepository(ApplicationDbContext context, ICloudinaryImage cloudinary) : IPostRepository
+    public class PostRepository(ApplicationDbContext context, ICloudinaryRepository cloudinary) : IPostRepository
     {
         private readonly ApplicationDbContext _context = context;
-        private readonly ICloudinaryImage _cloudinary = cloudinary;
+        private readonly ICloudinaryRepository _cloudinary = cloudinary;
 
         public async Task<string> CreatePost(string userId, string? groupId, Post post, IFormFileCollection? images)
         {

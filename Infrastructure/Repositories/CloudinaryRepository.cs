@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Repositories
 {
-    public class CloudinaryRepository(Cloudinary cloudinary) : ICloudinaryImage
+    public class CloudinaryRepository(Cloudinary cloudinary) : ICloudinaryRepository
     {
         public async Task<(IEnumerable<string> deleted, IEnumerable<string> notDeleted)> Destroy(List<Image> images)
         {

@@ -91,7 +91,7 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Unauthorized();
         }
-        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>, NotFound, UnauthorizedHttpResult>> Update([FromForm] User newUser, [FromForm] string password, [FromForm] IFormFile? profilePicture, ClaimsPrincipal user, UserManager<User> userManager, [FromServices] ICloudinaryImage cloudinary)
+        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>, NotFound, UnauthorizedHttpResult>> Update([FromForm] User newUser, [FromForm] string password, [FromForm] IFormFile? profilePicture, ClaimsPrincipal user, UserManager<User> userManager, [FromServices] ICloudinaryRepository cloudinary)
         {
             // Still need to add profile picture change
             string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
