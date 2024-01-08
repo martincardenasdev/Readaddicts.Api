@@ -53,7 +53,7 @@ namespace Infrastructure.Repositories
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<ICollection<CommentDto>> GetReplies(string parentId)
+        public async Task<List<CommentDto>> GetReplies(string parentId)
         {
             var replies = await _context.Comments
                 .Where(x => x.ParentId == parentId)

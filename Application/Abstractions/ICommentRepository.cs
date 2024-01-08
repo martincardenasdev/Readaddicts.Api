@@ -8,6 +8,6 @@ namespace Application.Abstractions
         Task<CommentDto> UpdateComment(string userId, string commentId, string content);
         Task<bool> DeleteComment(string userId, string commentId);
         Task<CommentDto?> GetComment(string commentId);
-        Task<ICollection<CommentDto>> GetReplies(string parentId);
+        Task<List<CommentDto>> GetReplies(string parentId);
     }
 }
