@@ -63,8 +63,8 @@ namespace Infrastructure
                 .WithMany(g => g.Users)
                 .UsingEntity<UserGroup>(x =>
                 {
-                    x.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.NoAction);
-                    x.HasOne<Group>().WithMany().HasForeignKey(x => x.GroupId).OnDelete(DeleteBehavior.NoAction);
+                    x.HasOne<User>().WithMany().HasForeignKey(x => x.UserId);
+                    x.HasOne<Group>().WithMany().HasForeignKey(x => x.GroupId);
                 });
 
             // User creator and group
