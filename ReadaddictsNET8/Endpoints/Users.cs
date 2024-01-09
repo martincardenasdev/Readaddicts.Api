@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions;
 using Domain.Entities;
+using Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,12 +22,13 @@ namespace ReadaddictsNET8.Endpoints
             users.MapDelete("/delete", Delete).RequireAuthorization();
         }
 
-        public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
+        public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager, ApplicationDbContext context)
         {
             var newUser = new User
             {
                 UserName = user.UserName,
-                Email = user.Email
+                Email = user.Email,
+                LastLogin = DateTimeOffset.UtcNow
             };
 
             var result = await userManager.CreateAsync(newUser, user.PasswordHash);
@@ -46,7 +48,7 @@ namespace ReadaddictsNET8.Endpoints
         public static async Task<Results<Ok, BadRequest<IEnumerable<string>>>> AddRoles(RoleManager<IdentityRole> roleManager)
         {
             var admin = new IdentityRole("Admin");
-            var moderator = new IdentityRole("Moderator");
+            var moderator = new IdentityRole("Mode rator");
             var user = new IdentityRole("User");
 
             var result = await roleManager.CreateAsync(admin);
@@ -80,12 +82,19 @@ namespace ReadaddictsNET8.Endpoints
             var errors = result.Errors.Select(error => error.Description);
             return TypedResults.BadRequest(errors);
         }
-        public static async Task<Results<Ok<Microsoft.AspNetCore.Identity.SignInResult>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager)
+        public static async Task<Results<Ok<Microsoft.AspNetCore.Identity.SignInResult>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager, ApplicationDbContext context)
         {
             var result = await signInManager.PasswordSignInAsync(username, password, true, false);
 
             if (result.Succeeded)
             {
+                User? user = await signInManager.UserManager.FindByNameAsync(username);
+                user!.LastLogin = DateTimeOffset.UtcNow;
+
+                context.Update(user);
+
+                await context.SaveChangesAsync();
+
                 return TypedResults.Ok(result);
             }
 
