@@ -17,6 +17,8 @@ namespace ReadaddictsNET8.Endpoints
             groups.MapGet("{id}", GetGroup);
             groups.MapPost("/create", CreateGroup).RequireAuthorization();
             groups.MapPatch("{id}", UpdateGroup).RequireAuthorization();
+            groups.MapPost("{id}/join", JoinGroup).RequireAuthorization();
+            groups.MapPost("{id}/leave", LeaveGroup).RequireAuthorization();
         }
 
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -53,12 +55,33 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok(groupId);
         }
-
         public static async Task<Results<Ok, BadRequest>> UpdateGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id, [FromForm] Group group, [FromForm] IFormFile? picture)
         {
             bool updated = await groupRepository.UpdateGroup(id, GetUserId(user), group, picture);
 
             if (!updated)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok();
+        }
+        public static async Task<Results<Ok, BadRequest>> JoinGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
+        {
+            bool joined = await groupRepository.JoinGroup(GetUserId(user), id);
+
+            if (!joined)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok();
+        }
+        public static async Task<Results<Ok, BadRequest>> LeaveGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
+        {
+            bool left = await groupRepository.LeaveGroup(GetUserId(user), id);
+
+            if (!left)
             {
                 return TypedResults.BadRequest();
             }

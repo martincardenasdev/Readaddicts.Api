@@ -61,6 +61,18 @@ namespace ReadaddictsNET8Tests.Repository
                 await dbContext.Users.AddRangeAsync(users);
             }
 
+            if (!await dbContext.UsersGroups.AnyAsync())
+            {
+                var relations = new List<UserGroup>
+                {
+                    new() { UserId = "1", GroupId = "1"},
+                    new() { UserId = "1", GroupId = "2"},
+                    new() { UserId = "1", GroupId = "3"}
+                };
+
+                await dbContext.UsersGroups.AddRangeAsync(relations);
+            }
+
             await dbContext.SaveChangesAsync();
 
             return dbContext;
@@ -202,6 +214,62 @@ namespace ReadaddictsNET8Tests.Repository
 
             // Assert
             result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task JoinGroup_ReturnsTrue()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await groupRepository.JoinGroup("1", "4");
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task JoinGroup_ReturnsFalse()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await groupRepository.JoinGroup("1", "6");
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task LeaveGroup_ReturnsTrue()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await groupRepository.LeaveGroup("1", "1");
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task LeaveGroup_ReturnsFalse()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await groupRepository.LeaveGroup("1", "6");
+
+            // Assert
+            result.Should().BeFalse();
         }
     }
 }

@@ -46,6 +46,11 @@ namespace Infrastructure.Repositories
                 return string.Empty;
             }
 
+            if (images is not null)
+            {
+                _ = await AddImagesToPost(newPost.Id, userId, images);
+            }
+
             return newPost.Id;
         }
 
@@ -216,7 +221,7 @@ namespace Infrastructure.Repositories
                 return [];
 
             // Get a list of the images that were uploaded to Cloudinary and add them to the post
-            List<(string imageUrl, string publicId)> imgs = await _cloudinary.UploadMany(images);
+            List<(string imageUrl, string publicId, string result)> imgs = await _cloudinary.UploadMany(images);
 
             if (imgs.Count == 0)
             {

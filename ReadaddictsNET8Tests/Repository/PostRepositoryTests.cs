@@ -462,10 +462,10 @@ namespace ReadaddictsNET8Tests.Repository
                 new FormFile(new MemoryStream(Encoding.UTF8.GetBytes("This is a dummy img")), 0, 0, "Data", "dummy.jpg")
             };
 
-            var tupleResultList = new List<(string imageUrl, string publicId)>
+            var tupleResultList = new List<(string imageUrl, string publicId, string result)>
             {
-                ("FakeURL", "FakePublicId"),
-                ("FakeURL2", "FakePublicId2")
+                ("FakeURL", "FakePublicId", "FakeResult"),
+                ("FakeURL2", "FakePublicId2", "FakeResult2")
             };
 
             _cloudinaryMock
@@ -501,7 +501,7 @@ namespace ReadaddictsNET8Tests.Repository
                 new FormFile(new MemoryStream(Encoding.UTF8.GetBytes("This is a dummy img")), 0, 0, "Data", "dummy.jpg")
             };
 
-            var tupleResultList = new List<(string imageUrl, string publicId)>();
+            var tupleResultList = new List<(string imageUrl, string publicId, string result)>();
 
             _cloudinaryMock
                 .Setup(x => x.UploadMany(It.IsAny<IFormFileCollection>()))

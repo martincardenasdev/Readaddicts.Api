@@ -33,9 +33,14 @@ namespace Infrastructure.Repositories
             return (successfulDeletions, failedDeletions);
         }
 
-        public async Task<(string imageUrl, string publicId)> Upload(IFormFile image, int width, int height)
+        public async Task<(string imageUrl, string publicId, string error)> Upload(IFormFile image, int width, int height)
         {
             await using var stream = image.OpenReadStream();
+
+            if (image.Length >= 10485760)
+            {
+                return (string.Empty, string.Empty, $"{image.Name} size is too large.");
+            }
 
             ImageUploadParams uploadParams = new()
             {
@@ -58,15 +63,20 @@ namespace Infrastructure.Repositories
                 throw new Exception(uploadResult.Error.Message);
             }
 
-            return (uploadResult.SecureUrl.AbsoluteUri, uploadResult.PublicId);
+            return (uploadResult.SecureUrl.AbsoluteUri, uploadResult.PublicId, string.Empty);
         }
 
-        public async Task<List<(string imageUrl, string publicId)>> UploadMany(IFormFileCollection images)
+        public async Task<List<(string imageUrl, string publicId, string error)>> UploadMany(IFormFileCollection images)
         {
-            List<(string imageUrl, string publicId)> imageUrls = [];
+            List<(string imageUrl, string publicId, string result)> imageUrls = [];
 
             foreach (var image in images)
             {
+                if (image.Length >= 10485760)
+                {
+                    imageUrls.Add((string.Empty, string.Empty, $"{image.Name} size is too large."));
+                }
+
                 await using Stream stream = image.OpenReadStream();
 
                 ImageUploadParams uploadParams = new()
@@ -85,7 +95,7 @@ namespace Infrastructure.Repositories
                     throw new Exception(uploadResult.Error.Message);
                 }
 
-                imageUrls.Add((uploadResult.SecureUrl.AbsoluteUri, uploadResult.PublicId));
+                imageUrls.Add((uploadResult.SecureUrl.AbsoluteUri, uploadResult.PublicId, string.Empty));
             }
 
             return imageUrls;

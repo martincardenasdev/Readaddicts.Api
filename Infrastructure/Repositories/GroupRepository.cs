@@ -15,7 +15,7 @@ namespace Infrastructure.Repositories
         {
             if (picture is not null)
             {
-                var (imageUrl, _) = await _cloudinary.Upload(picture, 300, 300);
+                var (imageUrl, _, _) = await _cloudinary.Upload(picture, 300, 300);
                 group.Picture = imageUrl;
             }
 
@@ -102,6 +102,44 @@ namespace Infrastructure.Repositories
                 }).ToListAsync();
         }
 
+        public async Task<bool> JoinGroup(string userId, string groupId)
+        {
+            bool exists = _context.Groups.Any(x => x.Id == groupId);
+            bool userInGroup = _context.UsersGroups.Any(x => x.UserId == userId && x.GroupId == groupId);
+
+            if (!exists || userInGroup)
+            {
+                return false;
+            }
+
+            var relation = new UserGroup
+            {
+                UserId = userId,
+                GroupId = groupId
+            };
+
+            _context.Add(relation);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> LeaveGroup(string userId, string groupId)
+        {
+            bool exists = _context.Groups.Any(x => x.Id == groupId);
+            bool userInGroup = _context.UsersGroups.Any(x => x.UserId == userId && x.GroupId == groupId);
+
+            if (!exists || !userInGroup)
+            {
+                return false;
+            }
+
+            var relation = await _context.UsersGroups
+                .Where(x => x.UserId == userId && x.GroupId == groupId)
+                .FirstOrDefaultAsync();
+
+            _context.Remove(relation);
+            return await _context.SaveChangesAsync() > 0;
+        }
+
         public async Task<bool> UpdateGroup(string groupId, string userId, Group group, IFormFile? picture)
         {
             var groupToUpdate = await _context.Groups.FindAsync(groupId);
@@ -111,20 +149,30 @@ namespace Infrastructure.Repositories
                 return false;
             }
 
+            bool anyChanges = false;
+
             if (picture is not null)
             {
-                var (imageUrl, _) = await _cloudinary.Upload(picture, 300, 300);
+                var (imageUrl, _, _) = await _cloudinary.Upload(picture, 300, 300);
                 groupToUpdate.Picture = imageUrl;
+                anyChanges = true;
             }
 
             if (group is not null && !string.IsNullOrWhiteSpace(group.Name))
             {
                 groupToUpdate.Name = group.Name;
+                anyChanges = true;
             }
 
             if (group is not null && !string.IsNullOrWhiteSpace(group.Description))
             {
                 groupToUpdate.Description = group.Description;
+                anyChanges = true;
+            }
+
+            if (!anyChanges)
+            {
+                return false;
             }
 
             _context.Update(groupToUpdate);
