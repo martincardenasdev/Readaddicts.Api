@@ -40,6 +40,7 @@ namespace Infrastructure.Repositories
                 {
                     Id = x.Id,
                     UserId = x.UserId,
+                    PostId = x.PostId,
                     Content = x.Content,
                     Created = x.Created,
                     User = new UserDto
@@ -51,6 +52,43 @@ namespace Infrastructure.Repositories
                     Children = replies,
                     ReplyCount = replies.Count
                 }).FirstOrDefaultAsync();
+        }
+
+        public async Task<DataCountPagesDto<List<CommentDto>>> GetPostComments(string postId, int page, int limit)
+        {
+            List<CommentDto> comments = await _context.Comments
+                .Where(x => x.PostId == postId && x.ParentId == null)
+                .OrderByDescending(x => x.Created)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .Include(x => x.User)
+                .Select(x => new CommentDto
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    PostId = x.PostId,
+                    Content = x.Content,
+                    Created = x.Created,
+                    User = new UserDto
+                    {
+                        Id = x.User.Id,
+                        UserName = x.User.UserName,
+                        ProfilePicture = x.User.ProfilePicture
+                    },
+                    ReplyCount = _context.Comments.Count(y => y.ParentId == x.Id)
+                })
+                .ToListAsync();
+
+            int commentsCount = await _context.Comments.CountAsync(x => x.PostId == postId && x.ParentId == null);
+
+            int pages = (int)Math.Ceiling((double)commentsCount / limit);
+
+            return new DataCountPagesDto<List<CommentDto>>
+            {
+                Data = comments,
+                Count = commentsCount,
+                Pages = pages
+            };
         }
 
         public async Task<List<CommentDto>> GetReplies(string parentId)

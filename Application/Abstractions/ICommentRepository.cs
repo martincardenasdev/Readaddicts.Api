@@ -9,5 +9,6 @@ namespace Application.Abstractions
         Task<bool> DeleteComment(string userId, string commentId);
         Task<CommentDto?> GetComment(string commentId);
         Task<List<CommentDto>> GetReplies(string parentId);
+        Task<DataCountPagesDto<List<CommentDto>>> GetPostComments(string postId, int page, int limit);
     }
 }

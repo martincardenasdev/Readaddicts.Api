@@ -117,7 +117,7 @@ namespace Infrastructure.Repositories
             return await _context.Posts
                 .Where(post => post.Id == id)
                 .Include(post => post.Creator)
-                .Include(post => post.Comments)
+                //.Include(post => post.Comments)
                 .Select(post => new PostDto
                 {
                     Id = post.Id,
@@ -135,22 +135,25 @@ namespace Infrastructure.Repositories
                         Id = image.Id,
                         Url = image.Url
                     }).ToList(),
-                    CommentCount = post.Comments.Count,
-                    Comments = post.Comments.Select(comment => new CommentDto
-                    {
-                        Id = comment.Id,
-                        UserId = comment.UserId,
-                        Content = comment.Content,
-                        Created = comment.Created,
-                        ReplyCount = _context.Comments.Count(reply => reply.ParentId == comment.Id)
-                    }).ToList()
+                    CommentCount = post.Comments.Count
+                    //Comments = post.Comments.Select(comment => new CommentDto
+                    //{
+                    //    Id = comment.Id,
+                    //    UserId = comment.UserId,
+                    //    Content = comment.Content,
+                    //    Created = comment.Created,
+                    //    ReplyCount = _context.Comments.Count(reply => reply.ParentId == comment.Id)
+                    //}).ToList()
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<List<PostDto>> GetPosts()
+        public async Task<List<PostDto>> GetPosts(int page, int limit)
         {
             return await _context.Posts
                 .Include(post => post.Creator)
+                .OrderByDescending(post => post.Created)
+                .Skip((page - 1) * limit)
+                .Take(limit)
                 .Select(post => new PostDto
                 {
                     Id = post.Id,

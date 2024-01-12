@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Domain.Dto;
 using Domain.Entities;
 using Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -17,12 +18,15 @@ namespace ReadaddictsNET8.Endpoints
             users.MapPost("/register", Register);
             users.MapPost("/login", Login);
             users.MapPost("/add-roles", AddRoles);
-            users.MapPatch("/update", Update);
+            users.MapPatch("/update", Update).DisableAntiforgery();
             users.MapPatch("/update-password", UpdatePassword).RequireAuthorization();
             users.MapDelete("/delete", Delete).RequireAuthorization();
+            users.MapGet("/{username}", GetUser);
+            users.MapGet("/current", GetCurrentUser).RequireAuthorization();
+            users.MapPost("/logout", Logout).RequireAuthorization();
         }
 
-        public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager, ApplicationDbContext context)
+        public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
         {
             var newUser = new User
             {
@@ -82,7 +86,7 @@ namespace ReadaddictsNET8.Endpoints
             var errors = result.Errors.Select(error => error.Description);
             return TypedResults.BadRequest(errors);
         }
-        public static async Task<Results<Ok<Microsoft.AspNetCore.Identity.SignInResult>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager, ApplicationDbContext context)
+        public static async Task<Results<Ok<UserDto>, UnauthorizedHttpResult>> Login(string username, string password, SignInManager<User> signInManager, ApplicationDbContext context)
         {
             var result = await signInManager.PasswordSignInAsync(username, password, true, false);
 
@@ -95,7 +99,14 @@ namespace ReadaddictsNET8.Endpoints
 
                 await context.SaveChangesAsync();
 
-                return TypedResults.Ok(result);
+                var userDto = new UserDto
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    ProfilePicture = user.ProfilePicture
+                };
+
+                return TypedResults.Ok(userDto);
             }
 
             return TypedResults.Unauthorized();
@@ -171,6 +182,53 @@ namespace ReadaddictsNET8.Endpoints
 
             var errors = result.Errors.Select(error => error.Description);
             return TypedResults.BadRequest(errors);
+        }
+        public static async Task<Results<Ok<UserDto>, NotFound>> GetUser(string username, UserManager<User> userManager, ApplicationDbContext context)
+        {
+            User? user = await userManager.FindByNameAsync(username);
+
+            if (user is null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                ProfilePicture = user.ProfilePicture,
+                LastLogin = user.LastLogin,
+                Biography = user.Biography,
+                TierName = context.Tiers.Find(user.TierId)?.Name
+            };
+
+            return TypedResults.Ok(userDto);
+        }
+        public static async Task<Results<Ok<UserDto>, NotFound>> GetCurrentUser(ClaimsPrincipal user, UserManager<User> userManager)
+        {
+            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            User? currentUser = await userManager.FindByIdAsync(userId);
+
+            if (currentUser is null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            var userDto = new UserDto
+            {
+                Id = currentUser.Id,
+                UserName = currentUser.UserName,
+                ProfilePicture = currentUser.ProfilePicture
+            };
+
+            return TypedResults.Ok(userDto);
+        }
+        public static async Task<Results<Ok, UnauthorizedHttpResult>> Logout(SignInManager<User> signInManager)
+        {
+            await signInManager.SignOutAsync();
+
+            return TypedResults.Ok();
         }
     }
 }

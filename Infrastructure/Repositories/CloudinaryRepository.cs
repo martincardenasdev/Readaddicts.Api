@@ -63,7 +63,9 @@ namespace Infrastructure.Repositories
                 throw new Exception(uploadResult.Error.Message);
             }
 
-            return (uploadResult.SecureUrl.AbsoluteUri, uploadResult.PublicId, string.Empty);
+            string imgPath = uploadResult.Url.Segments[4] + uploadResult.Url.Segments[5];
+
+            return (imgPath, uploadResult.PublicId, string.Empty);
         }
 
         public async Task<List<(string imageUrl, string publicId, string error)>> UploadMany(IFormFileCollection images)
@@ -95,7 +97,9 @@ namespace Infrastructure.Repositories
                     throw new Exception(uploadResult.Error.Message);
                 }
 
-                imageUrls.Add((uploadResult.SecureUrl.AbsoluteUri, uploadResult.PublicId, string.Empty));
+                string imgPath = uploadResult.Url.Segments[4] + uploadResult.Url.Segments[5];
+
+                imageUrls.Add((imgPath, uploadResult.PublicId, string.Empty));
             }
 
             return imageUrls;

@@ -249,7 +249,7 @@ namespace ReadaddictsNET8Tests.Repository
             var postRepository = new PostRepository(dbContext, _cloudinaryMock.Object);
 
             // Act
-            var result = await postRepository.GetPosts();
+            var result = await postRepository.GetPosts(1, 3);
 
             // Assert
             result.Should().NotBeNullOrEmpty();
