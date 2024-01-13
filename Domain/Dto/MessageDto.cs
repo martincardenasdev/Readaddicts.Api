@@ -7,5 +7,7 @@
         public DateTimeOffset Timestamp { get; set; }
         public UserDto Sender { get; set; }
         public UserDto Receiver { get; set; }
+        public string SenderId { get; set; }
+        public string ReceiverId { get; set; }
     }
 }

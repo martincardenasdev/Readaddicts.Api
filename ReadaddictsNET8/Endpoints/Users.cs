@@ -22,6 +22,7 @@ namespace ReadaddictsNET8.Endpoints
             users.MapPatch("/update-password", UpdatePassword).RequireAuthorization();
             users.MapDelete("/delete", Delete).RequireAuthorization();
             users.MapGet("/{username}", GetUser);
+            users.MapGet("/id/{id}", GetUserById);
             users.MapGet("/current", GetCurrentUser).RequireAuthorization();
             users.MapPost("/logout", Logout).RequireAuthorization();
         }
@@ -186,6 +187,27 @@ namespace ReadaddictsNET8.Endpoints
         public static async Task<Results<Ok<UserDto>, NotFound>> GetUser(string username, UserManager<User> userManager, ApplicationDbContext context)
         {
             User? user = await userManager.FindByNameAsync(username);
+
+            if (user is null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                ProfilePicture = user.ProfilePicture,
+                LastLogin = user.LastLogin,
+                Biography = user.Biography,
+                TierName = context.Tiers.Find(user.TierId)?.Name
+            };
+
+            return TypedResults.Ok(userDto);
+        }
+        public static async Task<Results<Ok<UserDto>, NotFound>> GetUserById(string id, UserManager<User> userManager, ApplicationDbContext context)
+        {
+            User? user = await userManager.FindByIdAsync(id);
 
             if (user is null)
             {
