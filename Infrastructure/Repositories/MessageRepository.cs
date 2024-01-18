@@ -13,7 +13,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.Messages
                 .Where(x => (x.ReceiverId == receiverId && x.SenderId == senderId) || (x.ReceiverId == senderId && x.SenderId == receiverId))
-                .OrderBy(x => x.Timestamp)
+                .OrderByDescending(x => x.Timestamp)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .Select(x => new MessageDto
@@ -24,23 +24,36 @@ namespace Infrastructure.Repositories
                     SenderId = x.SenderId,
                     ReceiverId = x.ReceiverId
                 })
+                .Reverse()
                 .ToListAsync();
         }
 
         public async Task<List<UserDto>> GetRecentChats(string userId)
         {
-            return await _context.Messages
+            var recentUsers = await _context.Messages
                 .Where(x => x.ReceiverId == userId || x.SenderId == userId)
                 .OrderByDescending(x => x.Timestamp)
-                .Select(x => new UserDto
-                {
-                    Id = x.SenderId == userId ? x.Receiver.Id : x.Sender.Id,
-                    UserName = x.SenderId == userId ? x.Receiver.UserName : x.Sender.UserName,
-                    ProfilePicture = x.SenderId == userId ? x.Receiver.ProfilePicture : x.Sender.ProfilePicture,
-                    LastLogin = x.SenderId == userId ? x.Receiver.LastLogin : x.Sender.LastLogin,
-                })
+                .Select(x => x.ReceiverId == userId ? x.SenderId : x.ReceiverId)
                 .Distinct()
                 .ToListAsync();
+
+            var users = await _context.Users
+                .Where(x => recentUsers.Contains(x.Id))
+                .Select(x => new UserDto
+                {
+                    Id = x.Id,
+                    UserName = x.UserName,
+                    ProfilePicture = x.ProfilePicture,
+                    LastLogin = x.LastLogin
+                })
+                .OrderByDescending(u => _context.Messages
+                .Where(m => (m.SenderId == userId && m.ReceiverId == u.Id) || (m.SenderId == u.Id && m.ReceiverId == userId))
+                .OrderByDescending(m => m.Timestamp)
+                .Select(m => m.Timestamp)
+                .FirstOrDefault())
+                .ToListAsync();
+
+            return users;
         }
 
         public async Task<List<Message>> GetUserMessages(string id) => await _context.Messages.Where(m => m.ReceiverId == id).ToListAsync();
@@ -79,6 +92,8 @@ namespace Infrastructure.Repositories
                 Id = newMessage.Id,
                 Content = newMessage.Content,
                 Timestamp = newMessage.Timestamp,
+                SenderId = newMessage.SenderId,
+                ReceiverId = newMessage.ReceiverId
             };
         }
     }

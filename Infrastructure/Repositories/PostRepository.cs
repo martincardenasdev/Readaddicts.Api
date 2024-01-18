@@ -171,7 +171,8 @@ namespace Infrastructure.Repositories
                         Id = image.Id,
                         Url = image.Url
                     }).Take(5).ToList(),
-                    CommentCount = _context.Comments.Count(comment => comment.PostId == post.Id)
+                    CommentCount = _context.Comments.Count(comment => comment.PostId == post.Id),
+                    ImageCount = _context.Images.Count(image => image.PostId == post.Id)
                 })
                 .ToListAsync();
         }

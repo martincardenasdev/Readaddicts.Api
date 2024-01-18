@@ -12,5 +12,6 @@ namespace Domain.Dto
         public IEnumerable<ImageDto> Images { get; set; }
         public IEnumerable<CommentDto> Comments { get; set; }
         public int CommentCount { get; set; }
+        public int ImageCount { get; set; }
     }
 }
