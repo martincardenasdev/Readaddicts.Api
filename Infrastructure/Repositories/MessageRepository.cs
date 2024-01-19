@@ -1,13 +1,16 @@
 ﻿using Application.Abstractions;
 using Domain.Dto;
 using Domain.Entities;
+using Infrastructure.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories
 {
-    public class MessageRepository(ApplicationDbContext context) : IMessageRepository
+    public class MessageRepository(ApplicationDbContext context, IHubContext<ChatHub> hub) : IMessageRepository
     {
         private readonly ApplicationDbContext _context = context;
+        private readonly IHubContext<ChatHub> _hub = hub;
 
         public async Task<List<MessageDto>> GetConversation(int page, int limit, string receiverId, string senderId)
         {
@@ -87,7 +90,7 @@ namespace Infrastructure.Repositories
                 return null;
             }
 
-            return new MessageDto
+            MessageDto messageDto = new()
             {
                 Id = newMessage.Id,
                 Content = newMessage.Content,
@@ -95,6 +98,11 @@ namespace Infrastructure.Repositories
                 SenderId = newMessage.SenderId,
                 ReceiverId = newMessage.ReceiverId
             };
+
+            // Call SendMessage from chathub here instead of the next line
+            await _hub.Clients.User(receiverId).SendAsync("ReceiveMessage", messageDto);
+
+            return messageDto;
         }
     }
 }

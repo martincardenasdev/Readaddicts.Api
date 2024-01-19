@@ -12,7 +12,7 @@ namespace ReadaddictsNET8.Endpoints
         {
             RouteGroupBuilder comments = routes.MapGroup("/api/v1/messages");
 
-            comments.MapPost("send/{receiverId}", CreateMessage).RequireAuthorization();
+            comments.MapPost("send/{receiverId}", CreateMessage).RequireAuthorization(); // Dont actually hit this. Use SignalR instead
             comments.MapGet("", GetUserMessages).RequireAuthorization();
             comments.MapGet("conversation/{receiverId}", GetConversation).RequireAuthorization();
             comments.MapGet("recent-chats", GetRecentChats).RequireAuthorization();

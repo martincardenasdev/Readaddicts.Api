@@ -2,7 +2,6 @@
 using Application.Interfaces;
 using Domain.Dto;
 using Domain.Entities;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

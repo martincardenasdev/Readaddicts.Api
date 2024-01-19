@@ -4,6 +4,7 @@ using CloudinaryDotNet;
 using Domain.Entities;
 using dotenv.net;
 using Infrastructure;
+using Infrastructure.Hubs;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using ReadaddictsNET8.Endpoints;
@@ -68,6 +69,12 @@ cloudinary.Api.Secure = true;
 
 builder.Services.AddSingleton(cloudinary);
 
+// SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
+
 var app = builder.Build();
 
 // Add endpoints
@@ -77,6 +84,9 @@ app.AddUsersEndpoints();
 app.AddCommentsEndpoints();
 app.AddMessagesEndpoints();
 app.AddGroupsEndpoints();
+
+// Add SignalR endpoints
+app.MapHub<ChatHub>("/api/v1/chatHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
