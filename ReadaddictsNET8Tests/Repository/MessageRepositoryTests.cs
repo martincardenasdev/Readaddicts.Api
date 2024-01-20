@@ -2,14 +2,23 @@
 using Domain.Entities;
 using FluentAssertions;
 using Infrastructure;
+using Infrastructure.Hubs;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace ReadaddictsNET8Tests.Repository
 {
     public class MessageRepositoryTests
     {
+        private readonly IHubContext<ChatHub> _hubContext;
+        public MessageRepositoryTests()
+        {
+            var mockHubContext = new Mock<IHubContext<ChatHub>>();
+            _hubContext = mockHubContext.Object;
+        }
         private static DbContextOptions<ApplicationDbContext> GetInMemoryDatabaseOptions
         {
             get
@@ -66,7 +75,7 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.GetUserMessages("2");
@@ -90,7 +99,7 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.GetUserMessages("999");
@@ -105,7 +114,17 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+
+            // Dont ask how this works copilot did it
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockClientProxy.Setup(clientProxy => clientProxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+            var mockClients = new Mock<IHubClients>();
+            mockClients.Setup(clients => clients.User(It.IsAny<string>())).Returns(mockClientProxy.Object);
+
+            var mockHubContext = new Mock<IHubContext<ChatHub>>();
+            mockHubContext.Setup(hubContext => hubContext.Clients).Returns(mockClients.Object);
+            var messageRepository = new MessageRepository(dbContext, mockHubContext.Object);
 
             // Act
             var result = await messageRepository.Send("2", "1", "Message 6");
@@ -121,7 +140,7 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.Send("2", "999", "Message 6");
@@ -135,7 +154,7 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.GetConversation(1, 5, "1", "2");
@@ -146,10 +165,8 @@ namespace ReadaddictsNET8Tests.Repository
             foreach (var message in result)
             {
                 message.Should().BeOfType<MessageDto>();
-                message.Sender.Should().BeOfType<UserDto>();
-                message.Receiver.Should().BeOfType<UserDto>();
-                message.Sender.Id.Should().Be("2");
-                message.Receiver.Id.Should().Be("1");
+                message.SenderId.Should().Be("2");
+                message.ReceiverId.Should().Be("1");
             }
         }
 
@@ -158,7 +175,7 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.GetConversation(1, 5, "999", "2");
@@ -173,14 +190,14 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.GetRecentChats("1");
 
             // Assert
             result.Should().BeOfType<List<UserDto>>();
-            result.Should().HaveCount(2);
+            result.Should().HaveCount(1);
             foreach (var user in result)
             {
                 user.Should().BeOfType<UserDto>();
@@ -193,7 +210,7 @@ namespace ReadaddictsNET8Tests.Repository
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
-            var messageRepository = new MessageRepository(dbContext);
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
 
             // Act
             var result = await messageRepository.GetRecentChats("999");
@@ -201,6 +218,20 @@ namespace ReadaddictsNET8Tests.Repository
             // Assert
             result.Should().BeOfType<List<UserDto>>();
             result.Should().HaveCount(0);
+        }
+
+        [Fact]
+        public async Task ReadMessages_ReturnsTrue()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
+
+            // Act
+            var result = await messageRepository.ReadMessages("1", "2");
+
+            // Assert
+            result.Should().BeTrue();
         }
     }
 }

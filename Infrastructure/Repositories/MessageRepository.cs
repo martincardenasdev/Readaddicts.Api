@@ -45,9 +45,10 @@ namespace Infrastructure.Repositories
                 .Select(x => new UserDto
                 {
                     Id = x.Id,
-                    UserName = x.UserName,
+                    UserName = x.UserName ?? string.Empty,
                     ProfilePicture = x.ProfilePicture,
-                    LastLogin = x.LastLogin
+                    LastLogin = x.LastLogin,
+                    UnreadMessages = _context.Messages.Count(m => m.ReceiverId == userId && m.SenderId == x.Id && !m.IsRead)
                 })
                 .OrderByDescending(u => _context.Messages
                 .Where(m => (m.SenderId == userId && m.ReceiverId == u.Id) || (m.SenderId == u.Id && m.ReceiverId == userId))
@@ -60,6 +61,21 @@ namespace Infrastructure.Repositories
         }
 
         public async Task<List<Message>> GetUserMessages(string id) => await _context.Messages.Where(m => m.ReceiverId == id).ToListAsync();
+
+        public async Task<bool> ReadMessages(string senderId, string receiverId)
+        {
+            // The idea its when opening a conversation all the messages are marked as read
+            var messages = await _context.Messages.Where(m => m.SenderId == senderId && m.ReceiverId == receiverId && !m.IsRead).ToListAsync();
+
+            foreach (var message in messages)
+            {
+                message.IsRead = true;
+            }
+
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            return rowsAffected > 0;
+        }
 
         public async Task<MessageDto> Send(string senderId, string receiverId, string message)
         {

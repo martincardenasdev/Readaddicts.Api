@@ -8,5 +8,6 @@
         public DateTimeOffset LastLogin { get; set; }
         public string? Biography { get; set; }
         public string TierName { get; set; }
+        public int? UnreadMessages { get; set; }
     }
 }

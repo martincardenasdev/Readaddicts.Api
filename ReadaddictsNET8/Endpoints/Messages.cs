@@ -10,12 +10,13 @@ namespace ReadaddictsNET8.Endpoints
     {
         public static void AddMessagesEndpoints(this IEndpointRouteBuilder routes)
         {
-            RouteGroupBuilder comments = routes.MapGroup("/api/v1/messages");
+            RouteGroupBuilder messages = routes.MapGroup("/api/v1/messages");
 
-            comments.MapPost("send/{receiverId}", CreateMessage).RequireAuthorization(); // Dont actually hit this. Use SignalR instead
-            comments.MapGet("", GetUserMessages).RequireAuthorization();
-            comments.MapGet("conversation/{receiverId}", GetConversation).RequireAuthorization();
-            comments.MapGet("recent-chats", GetRecentChats).RequireAuthorization();
+            messages.MapPost("send/{receiverId}", CreateMessage).RequireAuthorization(); // Dont actually hit this. Use SignalR instead
+            messages.MapGet("", GetUserMessages).RequireAuthorization();
+            messages.MapGet("conversation/{receiverId}", GetConversation).RequireAuthorization();
+            messages.MapGet("recent-chats", GetRecentChats).RequireAuthorization();
+            messages.MapPatch("read-messages/{senderId}", ReadMessages).RequireAuthorization();
         }
 
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -62,6 +63,17 @@ namespace ReadaddictsNET8.Endpoints
             }
 
             return TypedResults.Ok(users);
+        }
+        public static async Task<Results<Ok, BadRequest>> ReadMessages(IMessageRepository messageRepository, ClaimsPrincipal user, string senderId)
+        {
+            bool success = await messageRepository.ReadMessages(senderId, GetUserId(user));
+
+            if (!success)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok();
         }
     }
 }

@@ -9,5 +9,6 @@ namespace Application.Abstractions
         Task<MessageDto> Send(string senderId, string receiverId, string message);
         Task<List<MessageDto>> GetConversation(int page, int limit, string receiverId, string senderId);
         Task<List<UserDto>> GetRecentChats(string userId);
+        Task<bool> ReadMessages(string senderId, string receiverId);
     }
 }
