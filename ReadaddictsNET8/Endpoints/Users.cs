@@ -25,6 +25,7 @@ namespace ReadaddictsNET8.Endpoints
             users.MapGet("/id/{id}", GetUserById);
             users.MapGet("/current", GetCurrentUser).RequireAuthorization();
             users.MapPost("/logout", Logout).RequireAuthorization();
+            users.MapPost("/refresh", UpdateLastLogin).RequireAuthorization();
         }
 
         public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
@@ -249,6 +250,23 @@ namespace ReadaddictsNET8.Endpoints
         public static async Task<Results<Ok, UnauthorizedHttpResult>> Logout(SignInManager<User> signInManager)
         {
             await signInManager.SignOutAsync();
+
+            return TypedResults.Ok();
+        }
+        public static async Task<Results<Ok, UnauthorizedHttpResult>> UpdateLastLogin(ClaimsPrincipal user, ApplicationDbContext context)
+        {
+            string userId = user.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            User? currentUser = await context.Users.FindAsync(userId);
+
+            if (currentUser is null)
+            {
+                return TypedResults.Unauthorized();
+            }
+
+            currentUser.LastLogin = DateTimeOffset.UtcNow;
+
+            await context.SaveChangesAsync();
 
             return TypedResults.Ok();
         }

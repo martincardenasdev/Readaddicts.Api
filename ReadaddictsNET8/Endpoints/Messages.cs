@@ -17,6 +17,7 @@ namespace ReadaddictsNET8.Endpoints
             messages.MapGet("conversation/{receiverId}", GetConversation).RequireAuthorization();
             messages.MapGet("recent-chats", GetRecentChats).RequireAuthorization();
             messages.MapPatch("read-messages/{senderId}", ReadMessages).RequireAuthorization();
+            messages.MapGet("notification-count", GetMessageNotificationCount).RequireAuthorization();
         }
 
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -64,16 +65,22 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok(users);
         }
-        public static async Task<Results<Ok, BadRequest>> ReadMessages(IMessageRepository messageRepository, ClaimsPrincipal user, string senderId)
+        public static async Task<Results<Ok<int>, BadRequest>> ReadMessages(IMessageRepository messageRepository, ClaimsPrincipal user, string senderId)
         {
-            bool success = await messageRepository.ReadMessages(senderId, GetUserId(user));
+            int messagesRead = await messageRepository.ReadMessages(senderId, GetUserId(user));
 
-            if (!success)
+            if (messagesRead == 0)
             {
                 return TypedResults.BadRequest();
             }
 
-            return TypedResults.Ok();
+            return TypedResults.Ok(messagesRead);
+        }
+        public static async Task<Results<Ok<int>, BadRequest>> GetMessageNotificationCount(IMessageRepository messageRepository, ClaimsPrincipal user)
+        {
+            int count = await messageRepository.GetMessageNotificationCount(GetUserId(user));
+
+            return TypedResults.Ok(count);
         }
     }
 }

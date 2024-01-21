@@ -221,7 +221,7 @@ namespace ReadaddictsNET8Tests.Repository
         }
 
         [Fact]
-        public async Task ReadMessages_ReturnsTrue()
+        public async Task ReadMessages_ReturnsDeletedMessagesCount()
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
@@ -231,7 +231,58 @@ namespace ReadaddictsNET8Tests.Repository
             var result = await messageRepository.ReadMessages("1", "2");
 
             // Assert
+            result.Should().Be(5);
+        }
+
+        [Fact]
+        public async Task GetMessageNotificationCount_ReturnsCount()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            // Dont ask how this works copilot did it
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockClientProxy.Setup(clientProxy => clientProxy.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+            var mockClients = new Mock<IHubClients>();
+            mockClients.Setup(clients => clients.User(It.IsAny<string>())).Returns(mockClientProxy.Object);
+
+            var mockHubContext = new Mock<IHubContext<ChatHub>>();
+            mockHubContext.Setup(hubContext => hubContext.Clients).Returns(mockClients.Object);
+            var messageRepository = new MessageRepository(dbContext, mockHubContext.Object);
+
+            // Act
+            var result = await messageRepository.GetMessageNotificationCount("1");
+
+            // Assert
+            result.Should().Be(5);
+        }
+
+        [Fact]
+        public async Task UpdateUserLastLogin_ReturnsTrue()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
+
+            // Act
+            var result = await messageRepository.UpdateUserLastLogin("1");
+
+            // Assert
             result.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task UpdateUserLastLogin_ReturnsFalse()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var messageRepository = new MessageRepository(dbContext, _hubContext);
+
+            // Act
+            var result = await messageRepository.UpdateUserLastLogin("999");
+
+            // Assert
+            result.Should().BeFalse();
         }
     }
 }

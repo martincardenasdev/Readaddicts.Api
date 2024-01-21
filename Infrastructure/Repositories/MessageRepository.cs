@@ -31,6 +31,8 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<int> GetMessageNotificationCount(string userId) => await _context.Messages.Where(m => m.ReceiverId == userId && !m.IsRead).CountAsync();
+
         public async Task<List<UserDto>> GetRecentChats(string userId)
         {
             var recentUsers = await _context.Messages
@@ -62,7 +64,7 @@ namespace Infrastructure.Repositories
 
         public async Task<List<Message>> GetUserMessages(string id) => await _context.Messages.Where(m => m.ReceiverId == id).ToListAsync();
 
-        public async Task<bool> ReadMessages(string senderId, string receiverId)
+        public async Task<int> ReadMessages(string senderId, string receiverId)
         {
             // The idea its when opening a conversation all the messages are marked as read
             var messages = await _context.Messages.Where(m => m.SenderId == senderId && m.ReceiverId == receiverId && !m.IsRead).ToListAsync();
@@ -74,7 +76,14 @@ namespace Infrastructure.Repositories
 
             int rowsAffected = await _context.SaveChangesAsync();
 
-            return rowsAffected > 0;
+            if (rowsAffected == 0)
+            {
+                return 0;
+            }
+
+            await UpdateUserLastLogin(receiverId);
+
+            return rowsAffected;
         }
 
         public async Task<MessageDto> Send(string senderId, string receiverId, string message)
@@ -118,7 +127,25 @@ namespace Infrastructure.Repositories
             // Call SendMessage from chathub here instead of the next line
             await _hub.Clients.User(receiverId).SendAsync("ReceiveMessage", messageDto);
 
+            await UpdateUserLastLogin(receiverId);
+
             return messageDto;
+        }
+
+        public async Task<bool> UpdateUserLastLogin(string userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user is null)
+            {
+                return false;
+            }
+
+            user.LastLogin = DateTimeOffset.UtcNow;
+
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            return rowsAffected > 0;
         }
     }
 }

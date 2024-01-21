@@ -86,7 +86,7 @@ app.AddMessagesEndpoints();
 app.AddGroupsEndpoints();
 
 // Add SignalR endpoints
-app.MapHub<ChatHub>("/api/v1/chatHub");
+app.MapHub<ChatHub>("/chatHub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
