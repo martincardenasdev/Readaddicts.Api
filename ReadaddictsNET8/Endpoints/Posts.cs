@@ -26,14 +26,9 @@ namespace ReadaddictsNET8.Endpoints
 
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        public static async Task<Results<Ok<ICollection<PostDto>>, NotFound>> GetAllPosts(IPostRepository postRepository, int page, int limit)
+        public static async Task<Ok<DataCountPagesDto<List<PostDto>>>> GetAllPosts(IPostRepository postRepository, int page, int limit)
         {
-            ICollection<PostDto> posts = await postRepository.GetPosts(page, limit);
-
-            if (posts.Count is 0)
-            {
-                return TypedResults.NotFound();
-            }
+            var posts = await postRepository.GetPosts(page, limit);
 
             return TypedResults.Ok(posts);
         }

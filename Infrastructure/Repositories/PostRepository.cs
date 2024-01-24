@@ -147,9 +147,9 @@ namespace Infrastructure.Repositories
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<List<PostDto>> GetPosts(int page, int limit)
+        public async Task<DataCountPagesDto<List<PostDto>>> GetPosts(int page, int limit)
         {
-            return await _context.Posts
+            var posts = await _context.Posts
                 .Include(post => post.Creator)
                 .OrderByDescending(post => post.Created)
                 .Skip((page - 1) * limit)
@@ -175,6 +175,17 @@ namespace Infrastructure.Repositories
                     ImageCount = _context.Images.Count(image => image.PostId == post.Id)
                 })
                 .ToListAsync();
+
+            int count = await _context.Posts.CountAsync();
+
+            int pages = (int)Math.Ceiling(count / (double)limit);
+
+            return new DataCountPagesDto<List<PostDto>>
+            {
+                Data = posts,
+                Count = count,
+                Pages = pages
+            };
         }
 
         public async Task<(bool, PostDto)> UpdatePostContent(string postId, string userId, string content)

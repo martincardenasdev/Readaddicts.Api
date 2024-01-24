@@ -96,6 +96,11 @@ namespace Infrastructure.Repositories
                 return null;
             }
 
+            if (message == string.Empty)
+            {
+                return null;
+            }
+
             var newMessage = new Message
             {
                 SenderId = senderId,
@@ -121,13 +126,20 @@ namespace Infrastructure.Repositories
                 Content = newMessage.Content,
                 Timestamp = newMessage.Timestamp,
                 SenderId = newMessage.SenderId,
-                ReceiverId = newMessage.ReceiverId
+                ReceiverId = newMessage.ReceiverId,
+                Sender = new UserDto
+                {
+                    Id = sender.Id,
+                    UserName = sender.UserName ?? string.Empty,
+                    ProfilePicture = sender.ProfilePicture,
+                    LastLogin = sender.LastLogin
+                }
             };
 
             // Call SendMessage from chathub here instead of the next line
             await _hub.Clients.User(receiverId).SendAsync("ReceiveMessage", messageDto);
 
-            await UpdateUserLastLogin(receiverId);
+            await UpdateUserLastLogin(senderId);
 
             return messageDto;
         }

@@ -5,6 +5,7 @@ using Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ReadaddictsNET8.Endpoints
@@ -24,6 +25,7 @@ namespace ReadaddictsNET8.Endpoints
             users.MapGet("/{username}", GetUser);
             users.MapGet("/id/{id}", GetUserById);
             users.MapGet("/current", GetCurrentUser).RequireAuthorization();
+            users.MapGet("/all", GetUsers);
             users.MapPost("/logout", Logout).RequireAuthorization();
             users.MapPost("/refresh", UpdateLastLogin).RequireAuthorization();
         }
@@ -246,6 +248,22 @@ namespace ReadaddictsNET8.Endpoints
             };
 
             return TypedResults.Ok(userDto);
+        }
+        public static async Task<Ok<IEnumerable<UserDto>>> GetUsers(UserManager<User> userManager, int page, int limit)
+        {
+            IEnumerable<User> users = await userManager.Users
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            var userDtos = users.Select(user => new UserDto
+            {
+                Id = user.Id, 
+                UserName = user.UserName,
+                ProfilePicture = user.ProfilePicture
+            });
+
+            return TypedResults.Ok(userDtos);
         }
         public static async Task<Results<Ok, UnauthorizedHttpResult>> Logout(SignInManager<User> signInManager)
         {

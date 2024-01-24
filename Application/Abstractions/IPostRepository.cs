@@ -6,7 +6,7 @@ namespace Application.Interfaces
 {
     public interface IPostRepository
     {
-        Task<List<PostDto>> GetPosts(int page, int limit);
+        Task<DataCountPagesDto<List<PostDto>>> GetPosts(int page, int limit);
         Task<PostDto?> GetPost(string id);
         Task<string> CreatePost(string userId, string? groupId, Post post, IFormFileCollection? images);
         Task<bool> DeletePost(string userId, string postId);

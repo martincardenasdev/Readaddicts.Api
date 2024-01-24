@@ -242,7 +242,7 @@ namespace ReadaddictsNET8Tests.Repository
         }
 
         [Fact]
-        public async Task GetPosts_ReturnsAllPosts()
+        public async Task GetPosts_ReturnsAllPostsCountAndPages()
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
@@ -252,9 +252,12 @@ namespace ReadaddictsNET8Tests.Repository
             var result = await postRepository.GetPosts(1, 3);
 
             // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().HaveCount(3);
-            result.Should().BeOfType<List<PostDto>>();
+            result.Data.Should().NotBeNullOrEmpty();
+            result.Data.Should().HaveCount(3);
+            result.Data.Should().BeOfType<List<PostDto>>();
+            result.Count.Should().Be(3);
+            result.Pages.Should().Be(1);
+            result.Should().BeOfType<DataCountPagesDto<List<PostDto>>>();
         }
 
         [Fact]
