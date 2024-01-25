@@ -249,9 +249,10 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok(userDto);
         }
-        public static async Task<Ok<IEnumerable<UserDto>>> GetUsers(UserManager<User> userManager, int page, int limit)
+        public static async Task<Ok<DataCountPagesDto<IEnumerable<UserDto>>>> GetUsers(UserManager<User> userManager, int page, int limit, ApplicationDbContext context)
         {
             IEnumerable<User> users = await userManager.Users
+                .OrderByDescending(x => x.LastLogin)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync();
@@ -260,10 +261,24 @@ namespace ReadaddictsNET8.Endpoints
             {
                 Id = user.Id, 
                 UserName = user.UserName,
-                ProfilePicture = user.ProfilePicture
+                ProfilePicture = user.ProfilePicture,
+                LastLogin = user.LastLogin,
+                Biography = user.Biography,
+                TierName = context.Tiers.Find(user.TierId)?.Name
             });
 
-            return TypedResults.Ok(userDtos);
+            int count = await userManager.Users.CountAsync();
+
+            int pages = (int)Math.Ceiling(count / (double)limit);
+
+            var dataCountPagesDto = new DataCountPagesDto<IEnumerable<UserDto>>
+            {
+                Data = userDtos,
+                Count = count,
+                Pages = pages
+            };
+
+            return TypedResults.Ok(dataCountPagesDto);
         }
         public static async Task<Results<Ok, UnauthorizedHttpResult>> Logout(SignInManager<User> signInManager)
         {
