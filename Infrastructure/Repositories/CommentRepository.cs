@@ -54,6 +54,55 @@ namespace Infrastructure.Repositories
                 }).FirstOrDefaultAsync();
         }
 
+        public async Task<DataCountPagesDto<IEnumerable<CommentDto>>> GetCommentsByUser(string username, int page, int limit)
+        {
+            User? user = await _context.Users.FirstOrDefaultAsync(user => user.UserName == username);
+
+            if (user is null)
+            {
+                return new DataCountPagesDto<IEnumerable<CommentDto>>
+                {
+                    Data = new List<CommentDto>(),
+                    Count = 0,
+                    Pages = 0
+                };
+            }
+
+            var comments = await _context.Comments
+                .Where(x => x.UserId == user.Id)
+                .Include(x => x.User)
+                .OrderByDescending(x => x.Created)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .Select(x => new CommentDto
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    PostId = x.PostId,
+                    Content = x.Content,
+                    Created = x.Created,
+                    User = new UserDto
+                    {
+                        Id = x.User.Id,
+                        UserName = x.User.UserName,
+                        ProfilePicture = x.User.ProfilePicture
+                    },
+                    ReplyCount = _context.Comments.Count(y => y.ParentId == x.Id)
+                })
+                .ToListAsync();
+
+            int count = await _context.Comments.CountAsync(x => x.UserId == user.Id);
+
+            int pages = (int)Math.Ceiling((double)count / limit);
+
+            return new DataCountPagesDto<IEnumerable<CommentDto>>
+            {
+                Data = comments,
+                Count = count,
+                Pages = pages
+            };
+        }
+
         public async Task<DataCountPagesDto<List<CommentDto>>> GetPostComments(string postId, int page, int limit)
         {
             List<CommentDto> comments = await _context.Comments

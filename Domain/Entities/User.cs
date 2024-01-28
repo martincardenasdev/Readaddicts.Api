@@ -16,5 +16,6 @@ namespace Domain.Entities
         public ICollection<Group>? GroupsCreated { get; set; }
         public ICollection<Post>? Posts { get; set; }
         public ICollection<Image>? UploadedImages { get; set; }
+        public ICollection<UserGroup> UserGroups { get; set; } // Added
     }
 }

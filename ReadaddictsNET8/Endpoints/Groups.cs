@@ -15,21 +15,17 @@ namespace ReadaddictsNET8.Endpoints
 
             groups.MapGet("/all", GetGroups);
             groups.MapGet("{id}", GetGroup);
-            groups.MapPost("/create", CreateGroup).RequireAuthorization();
+            groups.MapPost("/create", CreateGroup).RequireAuthorization().DisableAntiforgery();
             groups.MapPatch("{id}", UpdateGroup).RequireAuthorization();
+            groups.MapDelete("{id}", DeleteGroup).RequireAuthorization();
             groups.MapPost("{id}/join", JoinGroup).RequireAuthorization();
             groups.MapPost("{id}/leave", LeaveGroup).RequireAuthorization();
         }
 
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
-        public static async Task<Results<Ok<List<GroupDto>>, NotFound>> GetGroups([FromServices] IGroupRepository groupRepository, int page, int limit)
+        public static async Task<Ok<DataCountPagesDto<IEnumerable<GroupDto>>>> GetGroups([FromServices] IGroupRepository groupRepository, int page, int limit)
         {
-            List<GroupDto> groups = await groupRepository.GetGroups(page, limit);
-
-            if (groups.Count == 0)
-            {
-                return TypedResults.NotFound();
-            }
+            var groups = await groupRepository.GetGroups(page, limit);
 
             return TypedResults.Ok(groups);
         }
@@ -60,6 +56,17 @@ namespace ReadaddictsNET8.Endpoints
             bool updated = await groupRepository.UpdateGroup(id, GetUserId(user), group, picture);
 
             if (!updated)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok();
+        }
+        public static async Task<Results<Ok, BadRequest>> DeleteGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
+        {
+            bool deleted = await groupRepository.DeleteGroup(id, GetUserId(user));
+
+            if (!deleted)
             {
                 return TypedResults.BadRequest();
             }

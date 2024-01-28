@@ -79,19 +79,32 @@ namespace ReadaddictsNET8Tests.Repository
         }
 
         [Fact]
-        public async Task GetGroups_ReturnsGroupList()
+        public async Task GetGroups_ReturnsAllGroupsCountAndPages()
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
             var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
 
             // Act
-            var result = await groupRepository.GetGroups(1,5);
+            var result = await groupRepository.GetGroups(1, 3);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Should().HaveCount(5);
-            result.Should().BeOfType<List<GroupDto>>();
+            result.Data.Should().NotBeNullOrEmpty();
+            result.Data.Should().HaveCount(3);
+            result.Data.Should().BeOfType<List<GroupDto>>();
+            result.Count.Should().Be(5);
+            result.Pages.Should().Be(2);
+            result.Should().BeOfType<DataCountPagesDto<IEnumerable<GroupDto>>>();
+            foreach (var group in result.Data)
+            {
+                group.Users.Should().NotBeNullOrEmpty();
+                group.Users.Should().BeOfType<List<UserDto>>();
+
+                foreach (var user in group.Users)
+                {
+                    user.Id.Should().NotBeNullOrEmpty();
+                }
+            }
         }
 
         [Fact]

@@ -13,5 +13,6 @@ namespace Application.Interfaces
         Task<(bool, PostDto)> UpdatePostContent(string postId, string userId, string content);
         Task<IEnumerable<ImageDto>> AddImagesToPost(string postId, string userId, IFormFileCollection images);
         Task<(IEnumerable<string> deleted, IEnumerable<string> notDeleted)> DeleteImageFromPost(string postId, string userId, List<string> imageIds);
+        Task<DataCountPagesDto<IEnumerable<PostDto>>> GetPostsByUser(string username, int page, int limit);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities
 {
@@ -8,5 +9,7 @@ namespace Domain.Entities
         public string Id { get; set; }
         public string UserId { get; set; }
         public string GroupId { get; set; }
+        public User User { get; set; } // Added
+        public Group Group { get; set; } // Added
     }
 }

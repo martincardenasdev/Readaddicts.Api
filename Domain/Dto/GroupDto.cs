@@ -8,5 +8,8 @@
         public string CreatorId { get; set; }
         public string? Picture { get; set; }
         public DateTimeOffset Created { get; set; }
+        public IEnumerable<UserDto> Users { get; set; }
+        public UserDto Creator { get; set; }
+        public IEnumerable<PostDto> Posts { get; set; }
     }
 }

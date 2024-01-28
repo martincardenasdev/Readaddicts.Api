@@ -269,5 +269,59 @@ namespace Infrastructure.Repositories
                 Url = i.Url
             }).ToList();
         }
+
+        public async Task<DataCountPagesDto<IEnumerable<PostDto>>> GetPostsByUser(string username, int page, int limit)
+        {
+            User? user = await _context.Users.FirstOrDefaultAsync(user => user.UserName == username);
+
+            if (user is null)
+            {
+                return new DataCountPagesDto<IEnumerable<PostDto>>
+                {
+                    Data = Enumerable.Empty<PostDto>(),
+                    Count = 0,
+                    Pages = 0
+                };
+            }
+
+            var posts = await _context.Posts
+                .Where(post => post.UserId == user.Id)
+                .Include(post => post.Creator)
+                .OrderByDescending(post => post.Created)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .Select(post => new PostDto
+                {
+                    Id = post.Id,
+                    UserId = post.UserId,
+                    Created = post.Created,
+                    Content = post.Content,
+                    Creator = new UserDto
+                    {
+                        Id = post.Creator.Id,
+                        UserName = post.Creator.UserName,
+                        ProfilePicture = post.Creator.ProfilePicture
+                    },
+                    Images = post.Images.Select(image => new ImageDto
+                    {
+                        Id = image.Id,
+                        Url = image.Url
+                    }).Take(5).ToList(),
+                    CommentCount = _context.Comments.Count(comment => comment.PostId == post.Id),
+                    ImageCount = _context.Images.Count(image => image.PostId == post.Id)
+                })
+                .ToListAsync();
+
+            int count = await _context.Posts.CountAsync(post => post.UserId == user.Id);
+
+            int pages = (int)Math.Ceiling(count / (double)limit);
+
+            return new DataCountPagesDto<IEnumerable<PostDto>>
+            {
+                Data = posts,
+                Count = count,
+                Pages = pages
+            };
+        }
     }
 }

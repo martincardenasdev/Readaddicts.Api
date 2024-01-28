@@ -25,6 +25,8 @@ namespace Infrastructure
             {
                 optionsBuilder.UseSqlServer(_config.GetConnectionString("DefaultConnection"));
             }
+
+            optionsBuilder.EnableSensitiveDataLogging(); // Dev only
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -66,6 +68,19 @@ namespace Infrastructure
                     x.HasOne<User>().WithMany().HasForeignKey(x => x.UserId);
                     x.HasOne<Group>().WithMany().HasForeignKey(x => x.GroupId);
                 });
+
+            // Configure the new nav properties in UserGroup
+            builder.Entity<UserGroup>()
+                .HasOne(ug => ug.User)
+                .WithMany(u => u.UserGroups)
+                .HasForeignKey(ug => ug.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<UserGroup>()
+                .HasOne(ug => ug.Group)
+                .WithMany(g => g.UserGroups)
+                .HasForeignKey(ug => ug.GroupId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // User creator and group
             builder.Entity<Group>()

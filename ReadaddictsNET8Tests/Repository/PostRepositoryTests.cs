@@ -517,5 +517,43 @@ namespace ReadaddictsNET8Tests.Repository
             result.Should().BeEmpty();
             result.Should().HaveCount(0);
         }
+
+        [Fact]
+        public async Task GetPostsByUser_ReturnsPosts()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var postRepository = new PostRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await postRepository.GetPostsByUser("User 1", 1, 3);
+
+            // Assert
+            result.Data.Should().NotBeNullOrEmpty();
+            result.Data.Should().HaveCount(3);
+            result.Data.Should().BeOfType<List<PostDto>>();
+            result.Count.Should().Be(3);
+            result.Pages.Should().Be(1);
+            result.Should().BeOfType<DataCountPagesDto<IEnumerable<PostDto>>>();
+            result.Data.Should().NotContainNulls();
+            result.Data.Should().BeOfType<List<PostDto>>();
+        }
+
+        [Fact]
+        public async Task GetPostsByUser_ReturnsNoPosts()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var postRepository = new PostRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await postRepository.GetPostsByUser("User 4", 1, 3);
+
+            // Assert
+            result.Data.Should().BeEmpty();
+            result.Data.Should().HaveCount(0);
+            result.Count.Should().Be(0);
+            result.Pages.Should().Be(0);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Application.Interfaces;
 using Domain.Dto;
 using Domain.Entities;
 using Infrastructure;
@@ -28,6 +29,8 @@ namespace ReadaddictsNET8.Endpoints
             users.MapGet("/all", GetUsers);
             users.MapPost("/logout", Logout).RequireAuthorization();
             users.MapPost("/refresh", UpdateLastLogin).RequireAuthorization();
+            users.MapGet("/{username}/posts", GetPostsByUser);
+            users.MapGet("/{username}/comments", GetCommentsByUser);
         }
 
         public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
@@ -56,7 +59,7 @@ namespace ReadaddictsNET8.Endpoints
         public static async Task<Results<Ok, BadRequest<IEnumerable<string>>>> AddRoles(RoleManager<IdentityRole> roleManager)
         {
             var admin = new IdentityRole("Admin");
-            var moderator = new IdentityRole("Mode rator");
+            var moderator = new IdentityRole("Moderator");
             var user = new IdentityRole("User");
 
             var result = await roleManager.CreateAsync(admin);
@@ -302,6 +305,18 @@ namespace ReadaddictsNET8.Endpoints
             await context.SaveChangesAsync();
 
             return TypedResults.Ok();
+        }
+        public static async Task<Ok<DataCountPagesDto<IEnumerable<PostDto>>>> GetPostsByUser(string username, int page, int limit, IPostRepository postRepository)
+        {
+            var posts = await postRepository.GetPostsByUser(username, page, limit);
+
+            return TypedResults.Ok(posts);
+        }
+        public static async Task<Ok<DataCountPagesDto<IEnumerable<CommentDto>>>> GetCommentsByUser(string username, int page, int limit, ICommentRepository commentRepository)
+        {
+            var comments = await commentRepository.GetCommentsByUser(username, page, limit);
+
+            return TypedResults.Ok(comments);
         }
     }
 }

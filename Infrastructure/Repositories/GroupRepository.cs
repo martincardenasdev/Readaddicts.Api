@@ -67,6 +67,12 @@ namespace Infrastructure.Repositories
                 return false;
             }
 
+            var relations = await _context.UsersGroups
+                .Where(x => x.GroupId == groupId)
+                .ToListAsync();
+
+            _context.RemoveRange(relations);
+
             _context.Remove(group);
             return await _context.SaveChangesAsync() > 0;
         }
@@ -86,9 +92,11 @@ namespace Infrastructure.Repositories
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<List<GroupDto>> GetGroups(int page, int limit)
+        public async Task<DataCountPagesDto<IEnumerable<GroupDto>>> GetGroups(int page, int limit)
         {
-            return await _context.Groups
+            var groups =  await _context.Groups
+                .Include(x => x.Users)
+                .Include(x => x.Creator)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .Select(x => new GroupDto
@@ -98,8 +106,32 @@ namespace Infrastructure.Repositories
                     Description = x.Description,
                     CreatorId = x.CreatorId,
                     Picture = x.Picture,
-                    Created = x.Created
+                    Created = x.Created,
+                    Users = _context.UsersGroups
+                        .Where(y => y.GroupId == x.Id)
+                        .Select(y => new UserDto {
+                            Id = y.User.Id,
+                            UserName = y.User.UserName,
+                            ProfilePicture = y.User.ProfilePicture
+                        }).Take(5).ToList(),
+                    Creator = new UserDto
+                    {
+                        Id = x.Creator.Id,
+                        UserName = x.Creator.UserName,
+                        ProfilePicture = x.Creator.ProfilePicture
+                    }
                 }).ToListAsync();
+
+            int count = await _context.Groups.CountAsync();
+
+            int pages = (int)Math.Ceiling((double)count / limit);
+
+            return new DataCountPagesDto<IEnumerable<GroupDto>>
+            {
+                Data = groups,
+                Count = count,
+                Pages = pages
+            };
         }
 
         public async Task<bool> JoinGroup(string userId, string groupId)
