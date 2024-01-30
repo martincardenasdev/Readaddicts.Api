@@ -18,7 +18,11 @@ namespace Infrastructure.Repositories
             {
                 post.GroupId = null;
             }
-            else
+
+            // Check if user is group member before adding this post as a group post
+            bool isUserMember = await _context.UsersGroups.AnyAsync(ug => ug.UserId == userId && ug.GroupId == groupId);
+
+            if (isUserMember)
             {
                 post.GroupId = groupId;
             }
@@ -151,6 +155,7 @@ namespace Infrastructure.Repositories
         {
             var posts = await _context.Posts
                 .Include(post => post.Creator)
+                .Where(x => x.GroupId == null)
                 .OrderByDescending(post => post.Created)
                 .Skip((page - 1) * limit)
                 .Take(limit)

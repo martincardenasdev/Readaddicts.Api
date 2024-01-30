@@ -15,6 +15,7 @@ namespace ReadaddictsNET8.Endpoints
 
             groups.MapGet("/all", GetGroups);
             groups.MapGet("{id}", GetGroup);
+            groups.MapGet("{id}/posts", GetPostsByGroup).RequireAuthorization();
             groups.MapPost("/create", CreateGroup).RequireAuthorization().DisableAntiforgery();
             groups.MapPatch("{id}", UpdateGroup).RequireAuthorization();
             groups.MapDelete("{id}", DeleteGroup).RequireAuthorization();
@@ -39,6 +40,12 @@ namespace ReadaddictsNET8.Endpoints
             }
 
             return TypedResults.Ok(group);
+        }
+        public static async Task<Ok<DataCountPagesDto<IEnumerable<PostDto>>>> GetPostsByGroup([FromServices] IGroupRepository groupRepository, string id, ClaimsPrincipal user, int page, int limit)
+        {
+            var posts = await groupRepository.GetPostsByGroup(id, GetUserId(user), page, limit);
+
+            return TypedResults.Ok(posts);
         }
         public static async Task<Results<Ok<string>, BadRequest>> CreateGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, [FromForm] Group group, [FromForm] IFormFile? picture)
         {

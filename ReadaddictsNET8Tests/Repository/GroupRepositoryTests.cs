@@ -73,6 +73,20 @@ namespace ReadaddictsNET8Tests.Repository
                 await dbContext.UsersGroups.AddRangeAsync(relations);
             }
 
+            if (!await dbContext.Posts.AnyAsync())
+            {
+                var posts = new List<Post>
+                {
+                    new() { Id = "1", UserId = "1", Created = DateTimeOffset.UtcNow, Content = "Post 1", GroupId = "1" },
+                    new() { Id = "2", UserId = "1", Created = DateTimeOffset.UtcNow, Content = "Post 2", GroupId = "1" },
+                    new() { Id = "3", UserId = "1", Created = DateTimeOffset.UtcNow, Content = "Post 3", GroupId = "1" },
+                    new() { Id = "4", UserId = "1", Created = DateTimeOffset.UtcNow, Content = "Post 4", GroupId = "2" },
+                    new() { Id = "5", UserId = "1", Created = DateTimeOffset.UtcNow, Content = "Post 5", GroupId = "2" }
+                };
+
+                await dbContext.Posts.AddRangeAsync(posts);
+            }
+
             await dbContext.SaveChangesAsync();
 
             return dbContext;
@@ -283,6 +297,43 @@ namespace ReadaddictsNET8Tests.Repository
 
             // Assert
             result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task GetPostsByGroup_ReturnsPostsCountAndPages()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await groupRepository.GetPostsByGroup("1", "1", 1, 3);
+
+            // Assert
+            result.Data.Should().NotBeNullOrEmpty();
+            result.Data.Should().HaveCount(3);
+            result.Data.Should().BeOfType<List<PostDto>>();
+            result.Count.Should().Be(3);
+            result.Pages.Should().Be(1);
+            result.Should().BeOfType<DataCountPagesDto<IEnumerable<PostDto>>>();
+            foreach (var post in result.Data)
+            {
+                post.Id.Should().NotBeNullOrEmpty();
+            }
+        }
+
+        [Fact]
+        public async Task GetPostsByGroup_ReturnsNull()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
+
+            // Act
+            var result = await groupRepository.GetPostsByGroup("1", "2", 1, 3);
+
+            // Assert
+            result.Should().BeNull();
         }
     }
 }

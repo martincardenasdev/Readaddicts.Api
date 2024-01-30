@@ -80,6 +80,8 @@ namespace Infrastructure.Repositories
         public async Task<GroupDto?> GetGroup(string groupId)
         {
             return await _context.Groups
+                .Include(x => x.Users)
+                .Include(x => x.Creator)
                 .Where(x => x.Id == groupId)
                 .Select(x => new GroupDto
                 {
@@ -88,7 +90,26 @@ namespace Infrastructure.Repositories
                     Description = x.Description,
                     CreatorId = x.CreatorId,
                     Picture = x.Picture,
-                    Created = x.Created
+                    Created = x.Created,
+                    Users = _context.UsersGroups
+                        .Where(y => y.GroupId == x.Id)
+                        .Select(y => new UserDto
+                        {
+                            Id = y.User.Id,
+                            UserName = y.User.UserName,
+                            ProfilePicture = y.User.ProfilePicture,
+                            LastLogin = y.User.LastLogin
+                        }).ToList(),
+                    Creator = new UserDto
+                    {
+                        Id = x.Creator.Id,
+                        UserName = x.Creator.UserName,
+                        ProfilePicture = x.Creator.ProfilePicture,
+                        LastLogin = x.Creator.LastLogin
+                    },
+                    MembersCount = _context.UsersGroups
+                        .Where(y => y.GroupId == x.Id)
+                        .Count()
                 }).FirstOrDefaultAsync();
         }
 
@@ -129,6 +150,54 @@ namespace Infrastructure.Repositories
             return new DataCountPagesDto<IEnumerable<GroupDto>>
             {
                 Data = groups,
+                Count = count,
+                Pages = pages
+            };
+        }
+
+        public async Task<DataCountPagesDto<IEnumerable<PostDto>>> GetPostsByGroup(string groupId, string userId, int page, int limit)
+        {
+            bool isUserMember = await _context.UsersGroups.AnyAsync(x => x.UserId == userId && x.GroupId == groupId);
+
+            if (!isUserMember)
+            {
+                return null;
+            }
+
+            List<PostDto> posts = await _context.Posts
+                .Where(x => x.GroupId == groupId)
+                .OrderByDescending(x => x.Created)
+                .Select(x => new PostDto
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    Created = x.Created,
+                    Content = x.Content,
+                    Creator = new UserDto
+                    {
+                        Id = x.Creator.Id,
+                        UserName = x.Creator.UserName,
+                        ProfilePicture = x.Creator.ProfilePicture
+                    },
+                    Images = x.Images.Select(x => new ImageDto
+                    {
+                        Id = x.Id,
+                        Url = x.Url
+                    }).ToList(),
+                    CommentCount = _context.Comments.Count(y => y.PostId == x.Id),
+                    ImageCount = _context.Images.Count(y => y.PostId == x.Id)
+                })
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            int count = await _context.Posts.CountAsync(x => x.GroupId == groupId);
+
+            int pages = (int)Math.Ceiling((double)count / limit);
+
+            return new DataCountPagesDto<IEnumerable<PostDto>>
+            {
+                Data = posts,
                 Count = count,
                 Pages = pages
             };

@@ -13,5 +13,6 @@ namespace Application.Abstractions
         Task<bool> DeleteGroup(string groupId, string userId);
         Task<bool> JoinGroup(string userId, string groupId);
         Task<bool> LeaveGroup(string userId, string groupId);
+        Task<DataCountPagesDto<IEnumerable<PostDto>>> GetPostsByGroup(string groupId, string userId, int page, int limit);
     }
 }
