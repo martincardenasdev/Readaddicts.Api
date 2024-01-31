@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions;
 using Application.Interfaces;
+using Domain.Common;
 using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -139,15 +140,13 @@ namespace Infrastructure.Repositories
                         Id = image.Id,
                         Url = image.Url
                     }).ToList(),
-                    CommentCount = post.Comments.Count
-                    //Comments = post.Comments.Select(comment => new CommentDto
-                    //{
-                    //    Id = comment.Id,
-                    //    UserId = comment.UserId,
-                    //    Content = comment.Content,
-                    //    Created = comment.Created,
-                    //    ReplyCount = _context.Comments.Count(reply => reply.ParentId == comment.Id)
-                    //}).ToList()
+                    CommentCount = post.Comments.Count,
+                    Group = new GroupDto
+                    {
+                        Id = post.Group.Id,
+                        Name = post.Group.Name,
+                        Picture = post.Group.Picture
+                    }
                 }).FirstOrDefaultAsync();
         }
 
@@ -181,7 +180,7 @@ namespace Infrastructure.Repositories
                 })
                 .ToListAsync();
 
-            int count = await _context.Posts.CountAsync();
+            int count = await _context.Posts.CountAsync(post => post.GroupId == null);
 
             int pages = (int)Math.Ceiling(count / (double)limit);
 

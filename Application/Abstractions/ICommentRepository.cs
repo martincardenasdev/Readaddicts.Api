@@ -1,4 +1,5 @@
-﻿using Domain.Dto;
+﻿using Domain.Common;
+using Domain.Dto;
 
 namespace Application.Abstractions
 {

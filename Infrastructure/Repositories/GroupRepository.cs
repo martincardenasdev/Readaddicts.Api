@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Domain.Common;
 using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -77,8 +78,15 @@ namespace Infrastructure.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<GroupDto?> GetGroup(string groupId)
+        public async Task<GroupDto?> GetGroup(string? userId, string groupId)
         {
+            bool isMember = false;
+
+            if (userId is not null)
+            {
+                isMember = await _context.UsersGroups.AnyAsync(x => x.UserId == userId && x.GroupId == groupId);
+            }
+
             return await _context.Groups
                 .Include(x => x.Users)
                 .Include(x => x.Creator)
@@ -93,6 +101,7 @@ namespace Infrastructure.Repositories
                     Created = x.Created,
                     Users = _context.UsersGroups
                         .Where(y => y.GroupId == x.Id)
+                        .OrderByDescending(y => y.Timestamp)
                         .Select(y => new UserDto
                         {
                             Id = y.User.Id,
@@ -109,7 +118,8 @@ namespace Infrastructure.Repositories
                     },
                     MembersCount = _context.UsersGroups
                         .Where(y => y.GroupId == x.Id)
-                        .Count()
+                        .Count(),
+                    IsMember = isMember
                 }).FirstOrDefaultAsync();
         }
 
@@ -203,34 +213,75 @@ namespace Infrastructure.Repositories
             };
         }
 
-        public async Task<bool> JoinGroup(string userId, string groupId)
+        public async Task<OperationResult<UserDto>> JoinGroup(string userId, string groupId)
         {
             bool exists = _context.Groups.Any(x => x.Id == groupId);
+
             bool userInGroup = _context.UsersGroups.Any(x => x.UserId == userId && x.GroupId == groupId);
 
             if (!exists || userInGroup)
             {
-                return false;
+                OperationResult<UserDto> result = new()
+                {
+                    Success = false,
+                    Message = "Group does not exist or user is already a member"
+                };
+
+                return result;
             }
 
-            var relation = new UserGroup
+            UserGroup relation = new()
             {
                 UserId = userId,
                 GroupId = groupId
             };
 
             _context.Add(relation);
-            return await _context.SaveChangesAsync() > 0;
+            int rowsAffected =  await _context.SaveChangesAsync();
+
+            if (rowsAffected is 0)
+            {
+                OperationResult<UserDto> result = new()
+                {
+                    Success = false,
+                    Message = "Could not join group"
+                };
+
+                return result;
+            }
+
+            UserDto? user = await _context.Users.Where(x => x.Id == userId).Select(x => new UserDto
+            {
+                Id = x.Id,
+                UserName = x.UserName,
+                ProfilePicture = x.ProfilePicture,
+                LastLogin = x.LastLogin
+            }).FirstOrDefaultAsync();
+
+            OperationResult<UserDto> result2 = new()
+            {
+                Success = true,
+                Message = "Joined group",
+                Data = user
+            };
+
+            return result2;
         }
 
-        public async Task<bool> LeaveGroup(string userId, string groupId)
+        public async Task<OperationResult<UserDto>> LeaveGroup(string userId, string groupId)
         {
             bool exists = _context.Groups.Any(x => x.Id == groupId);
             bool userInGroup = _context.UsersGroups.Any(x => x.UserId == userId && x.GroupId == groupId);
 
             if (!exists || !userInGroup)
             {
-                return false;
+                OperationResult<UserDto> result = new()
+                {
+                    Success = false,
+                    Message = "Group does not exist or user is not a member"
+                };
+
+                return result;
             }
 
             var relation = await _context.UsersGroups
@@ -238,7 +289,35 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync();
 
             _context.Remove(relation);
-            return await _context.SaveChangesAsync() > 0;
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            if (rowsAffected is 0)
+            {
+                OperationResult<UserDto> result = new()
+                {
+                    Success = false,
+                    Message = "Could not leave group"
+                };
+
+                return result;
+            }
+
+            UserDto? user = await _context.Users.Where(x => x.Id == userId).Select(x => new UserDto
+            {
+                Id = x.Id,
+                UserName = x.UserName,
+                ProfilePicture = x.ProfilePicture,
+                LastLogin = x.LastLogin
+            }).FirstOrDefaultAsync();
+
+            OperationResult<UserDto> result2 = new()
+            {
+                Success = true,
+                Message = "Left group",
+                Data = user
+            };
+
+            return result2;
         }
 
         public async Task<bool> UpdateGroup(string groupId, string userId, Group group, IFormFile? picture)

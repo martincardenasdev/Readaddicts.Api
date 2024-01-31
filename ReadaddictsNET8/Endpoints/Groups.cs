@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Domain.Common;
 using Domain.Dto;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -30,9 +31,9 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok(groups);
         }
-        public static async Task<Results<Ok<GroupDto>, NotFound>> GetGroup([FromServices] IGroupRepository groupRepository, string id)
+        public static async Task<Results<Ok<GroupDto>, NotFound>> GetGroup(ClaimsPrincipal user, [FromServices] IGroupRepository groupRepository, string id)
         {
-            GroupDto? group = await groupRepository.GetGroup(id);
+            GroupDto? group = await groupRepository.GetGroup(GetUserId(user), id);
 
             if (group is null)
             {
@@ -80,27 +81,27 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok();
         }
-        public static async Task<Results<Ok, BadRequest>> JoinGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
+        public static async Task<Results<Ok<OperationResult<UserDto>>, BadRequest<OperationResult<UserDto>>>> JoinGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
         {
-            bool joined = await groupRepository.JoinGroup(GetUserId(user), id);
+            var joinResult = await groupRepository.JoinGroup(GetUserId(user), id);
 
-            if (!joined)
+            if (!joinResult.Success)
             {
-                return TypedResults.BadRequest();
+                return TypedResults.BadRequest(joinResult);
             }
 
-            return TypedResults.Ok();
+            return TypedResults.Ok(joinResult);
         }
-        public static async Task<Results<Ok, BadRequest>> LeaveGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
+        public static async Task<Results<Ok<OperationResult<UserDto>>, BadRequest<OperationResult<UserDto>>>> LeaveGroup([FromServices] IGroupRepository groupRepository, ClaimsPrincipal user, string id)
         {
-            bool left = await groupRepository.LeaveGroup(GetUserId(user), id);
+            var leaveResult = await groupRepository.LeaveGroup(GetUserId(user), id);
 
-            if (!left)
+            if (!leaveResult.Success)
             {
-                return TypedResults.BadRequest();
+                return TypedResults.BadRequest(leaveResult);
             }
 
-            return TypedResults.Ok();
+            return TypedResults.Ok(leaveResult);
         }
     }
 }

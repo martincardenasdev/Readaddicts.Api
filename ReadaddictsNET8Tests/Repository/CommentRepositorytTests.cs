@@ -1,4 +1,5 @@
-﻿using Domain.Dto;
+﻿using Domain.Common;
+using Domain.Dto;
 using Domain.Entities;
 using FluentAssertions;
 using Infrastructure;
@@ -275,6 +276,38 @@ namespace ReadaddictsNET8Tests.Repository
 
             // Act
             var result = await commentRepository.GetPostComments("999", 1, 3);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Count.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetCommentsByUser_ReturnsComments()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var commentRepository = new CommentRepository(dbContext);
+
+            // Act
+            var result = await commentRepository.GetCommentsByUser("User 1", 1, 3);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Count.Should().Be(8);
+            result.Should().BeOfType<DataCountPagesDto<IEnumerable<CommentDto>>>();
+            result.Data.Should().BeOfType<List<CommentDto>>();
+        }
+
+        [Fact]
+        public async Task GetCommentsByUser_ReturnsEmptyList()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var commentRepository = new CommentRepository(dbContext);
+
+            // Act
+            var result = await commentRepository.GetCommentsByUser("User 999", 1, 3);
 
             // Assert
             result.Should().NotBeNull();

@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Domain.Common;
 using Domain.Dto;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;

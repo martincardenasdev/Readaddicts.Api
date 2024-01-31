@@ -1,4 +1,4 @@
-﻿namespace Domain.Dto
+﻿namespace Domain.Common
 {
     public class DataCountPagesDto<T>
     {

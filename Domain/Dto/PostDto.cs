@@ -13,5 +13,6 @@ namespace Domain.Dto
         public IEnumerable<CommentDto> Comments { get; set; }
         public int CommentCount { get; set; }
         public int ImageCount { get; set; }
+        public GroupDto? Group { get; set; }
     }
 }

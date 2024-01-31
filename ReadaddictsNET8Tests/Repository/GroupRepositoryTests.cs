@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Domain.Common;
 using Domain.Dto;
 using Domain.Entities;
 using FluentAssertions;
@@ -129,10 +130,11 @@ namespace ReadaddictsNET8Tests.Repository
             var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
 
             // Act
-            var result = await groupRepository.GetGroup("1");
+            var result = await groupRepository.GetGroup("1", "1");
 
             // Assert
             result.Should().NotBeNull();
+            result?.IsMember.Should().BeTrue();
             result.Should().BeOfType<GroupDto>();
         }
 
@@ -144,7 +146,7 @@ namespace ReadaddictsNET8Tests.Repository
             var groupRepository = new GroupRepository(dbContext, _cloudinaryMock.Object);
 
             // Act
-            var result = await groupRepository.GetGroup("6");
+            var result = await groupRepository.GetGroup("999", "999");
 
             // Assert
             result.Should().BeNull();
@@ -244,7 +246,7 @@ namespace ReadaddictsNET8Tests.Repository
         }
 
         [Fact]
-        public async Task JoinGroup_ReturnsTrue()
+        public async Task JoinGroup_ReturnsSuccess()
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
@@ -254,11 +256,16 @@ namespace ReadaddictsNET8Tests.Repository
             var result = await groupRepository.JoinGroup("1", "4");
 
             // Assert
-            result.Should().BeTrue();
+            result.Success.Should().BeTrue();
+            result.Message.Should().Be("Joined group");
+            result.Data.Should().NotBeNull();
+            result.Data.Should().BeOfType<UserDto>();
+            result.Data.Id.Should().NotBeNullOrEmpty();
+            result.Data.Id.Should().Be("1");
         }
 
         [Fact]
-        public async Task JoinGroup_ReturnsFalse()
+        public async Task JoinGroup_ReturnsFailure()
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
@@ -268,11 +275,12 @@ namespace ReadaddictsNET8Tests.Repository
             var result = await groupRepository.JoinGroup("1", "6");
 
             // Assert
-            result.Should().BeFalse();
+            result.Success.Should().BeFalse();
+            result.Message.Should().BeOneOf("Group does not exist or user is already a member", "Could not join group");
         }
 
         [Fact]
-        public async Task LeaveGroup_ReturnsTrue()
+        public async Task LeaveGroup_ReturnsSuccess()
         {
             // Arrange
             var dbContext = await GetApplicationDbContext();
@@ -282,7 +290,12 @@ namespace ReadaddictsNET8Tests.Repository
             var result = await groupRepository.LeaveGroup("1", "1");
 
             // Assert
-            result.Should().BeTrue();
+            result.Success.Should().BeTrue();
+            result.Message.Should().Be("Left group");
+            result.Data.Should().NotBeNull();
+            result.Data.Should().BeOfType<UserDto>();
+            result.Data.Id.Should().NotBeNullOrEmpty();
+            result.Data.Id.Should().Be("1");
         }
 
         [Fact]
@@ -296,7 +309,8 @@ namespace ReadaddictsNET8Tests.Repository
             var result = await groupRepository.LeaveGroup("1", "6");
 
             // Assert
-            result.Should().BeFalse();
+            result.Success.Should().BeFalse();
+            result.Message.Should().BeOneOf("Group does not exist or user is not a member", "Could not leave group");
         }
 
         [Fact]

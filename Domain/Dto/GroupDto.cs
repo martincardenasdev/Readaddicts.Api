@@ -12,5 +12,6 @@
         public UserDto Creator { get; set; }
         public IEnumerable<PostDto> Posts { get; set; }
         public int MembersCount { get; set; }
+        public bool IsMember { get; set; }
     }
 }

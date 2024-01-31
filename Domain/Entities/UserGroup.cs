@@ -9,6 +9,7 @@ namespace Domain.Entities
         public string Id { get; set; }
         public string UserId { get; set; }
         public string GroupId { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
         public User User { get; set; } // Added
         public Group Group { get; set; } // Added
     }
