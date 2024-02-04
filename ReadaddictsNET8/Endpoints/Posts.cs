@@ -22,6 +22,7 @@ namespace ReadaddictsNET8.Endpoints
             posts.MapPatch("/{id}", UpdatePostContent).RequireAuthorization();
             posts.MapPatch("/{id}/images/add", AddImagesToPost).RequireAuthorization().DisableAntiforgery();
             posts.MapPatch("/{id}/images/delete", DeleteImageFromPost).RequireAuthorization();
+            posts.MapPatch("/{id}/update", UpdateAll).RequireAuthorization().DisableAntiforgery();
             posts.MapGet("/{id}/comments", GetPostComments);
         }
 
@@ -66,16 +67,16 @@ namespace ReadaddictsNET8.Endpoints
 
             return TypedResults.Ok();
         }
-        public static async Task<Results<Ok<PostDto>, BadRequest>> UpdatePostContent(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromQuery] string content)
+        public static async Task<Results<Ok<string>, BadRequest>> UpdatePostContent(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromQuery] string content)
         {
-            (bool updated, PostDto postDto) = await postRepository.UpdatePostContent(id, GetUserId(user), content);
+            (bool updated, string newContent) = await postRepository.UpdatePostContent(id, GetUserId(user), content);
 
             if (!updated)
             {
                 return TypedResults.BadRequest();
             }
 
-            return TypedResults.Ok(postDto);
+            return TypedResults.Ok(newContent);
         }
         public static async Task<Results<Ok<IEnumerable<ImageDto>>, BadRequest>> AddImagesToPost(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromForm] IFormFileCollection images)
         {
@@ -103,6 +104,17 @@ namespace ReadaddictsNET8.Endpoints
             }
              
             return TypedResults.Ok(deleted);
+        }
+        public static async Task<Results<Ok<UpdatedPost>, BadRequest>> UpdateAll(IPostRepository postRepository, ClaimsPrincipal user, string id, [FromForm] string? content, [FromForm] IFormFileCollection? newImages, [FromForm] List<string>? imageIdsToRemove)
+        {
+            var updatedPost = await postRepository.UpdateAll(id, GetUserId(user), content, newImages, imageIdsToRemove);
+
+            if (updatedPost.NewContent is null && updatedPost.AddedImages is null && updatedPost.RemovedImages is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok(updatedPost);
         }
         public static async Task<Results<Ok<DataCountPagesDto<List<CommentDto>>>, NotFound>> GetPostComments(ICommentRepository commentRepository, string id, int page, int limit)
         {

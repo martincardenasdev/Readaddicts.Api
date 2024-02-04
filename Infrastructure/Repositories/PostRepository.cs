@@ -192,7 +192,7 @@ namespace Infrastructure.Repositories
             };
         }
 
-        public async Task<(bool, PostDto)> UpdatePostContent(string postId, string userId, string content)
+        public async Task<(bool, string)> UpdatePostContent(string postId, string userId, string content)
         {
             Post? post = await _context.Posts
                 .Include(post => post.Creator)
@@ -200,7 +200,7 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync(post => post.Id == postId);
 
             if (post is null || post.UserId != userId)
-                return (false, new PostDto());
+                return (false, string.Empty);
 
             post.Content = content;
             post.Modified = DateTimeOffset.UtcNow;
@@ -209,27 +209,9 @@ namespace Infrastructure.Repositories
             int rowsAffected = await _context.SaveChangesAsync();
 
             if (rowsAffected is 0)
-                return (false, new PostDto());
+                return (false, string.Empty);
 
-            return (true, new PostDto
-            {
-                Id = post.Id,
-                UserId = post.UserId,
-                Created = post.Created,
-                Content = post.Content,
-                Creator = new UserDto
-                {
-                    Id = post.Creator.Id,
-                    UserName = post.Creator.UserName,
-                    ProfilePicture = post.Creator.ProfilePicture
-                },
-                Images = post.Images.Select(image => new ImageDto
-                {
-                    Id = image.Id,
-                    Url = image.Url
-                }).ToList(),
-                CommentCount = _context.Comments.Count(comment => comment.PostId == post.Id)
-            });
+            return (true, content);
         }
 
         public async Task<IEnumerable<ImageDto>> AddImagesToPost(string postId, string userId, IFormFileCollection images)
@@ -325,6 +307,79 @@ namespace Infrastructure.Repositories
                 Data = posts,
                 Count = count,
                 Pages = pages
+            };
+        }
+
+        public async Task<UpdatedPost> UpdateAll(string postId, string userId, string? content, IFormFileCollection? newImages, List<string>? imageIdsToRemove)
+        {
+            Post? post = await _context.FindAsync<Post>(postId);
+
+            if (post is null || post.UserId != userId)
+                return new UpdatedPost();
+
+            if (!string.IsNullOrWhiteSpace(content))
+            {
+                post.Content = content;
+            }
+
+            List<ImageDto> addedImages = [];
+            if (newImages is not null && newImages.Count > 0)
+            {
+                List<(string imageUrl, string publicId, string result)> imgs = await _cloudinary.UploadMany(newImages);
+
+                List<Image> newPostImages = imgs.Select(image => new Image
+                {
+                    PostId = postId,
+                    UserId = userId,
+                    Url = image.imageUrl,
+                    CloudinaryPublicId = image.publicId,
+                    Created = DateTimeOffset.UtcNow
+                }).ToList();
+
+                _context.Images.AddRange(newPostImages);
+
+                List<ImageDto>? newPostImagesDto = newPostImages.Select(i => new ImageDto
+                {
+                    Id = i.Id,
+                    Url = i.Url
+                }).ToList();
+
+                addedImages.AddRange(newPostImagesDto);
+            }
+
+            List<string> removedImages = [];
+            if (imageIdsToRemove is not null && imageIdsToRemove.Count > 0)
+            {
+                List<Image> imagesToDelete = await _context.Images
+                    .Where(i => imageIdsToRemove.Contains(i.Id) && i.PostId == postId && i.UserId == userId)
+                    .ToListAsync();
+
+                // where errors its a list of the publicIds that failed to be deleted (if any)
+                var (deleted, notDeleted) = await _cloudinary.Destroy(imagesToDelete);
+
+                // after deleting from cloudinary delete from db, but exclude the images that failed to be deleted from cloudinary (if any)
+                List<Image> newImagesToDelete = imagesToDelete
+                    .Where(image => !notDeleted.Contains(image.CloudinaryPublicId))
+                    .ToList();
+
+                _context.RemoveRange(newImagesToDelete);
+                removedImages.AddRange(deleted);
+            }
+
+            post.Modified = DateTimeOffset.UtcNow;
+
+            _context.Update(post);
+
+            int rowsAffected = await _context.SaveChangesAsync();
+
+            if (rowsAffected is 0)
+                return new UpdatedPost();
+
+            return new UpdatedPost
+            {
+                NewContent = post.Content,
+                AddedImages = addedImages,
+                RemovedImages = removedImages
             };
         }
     }

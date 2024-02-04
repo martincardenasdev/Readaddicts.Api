@@ -22,11 +22,11 @@ namespace Infrastructure.Repositories
 
                 if (delete.Result == "ok")
                 {
-                    successfulDeletions.Add(image.CloudinaryPublicId);
+                    successfulDeletions.Add(image.Id);
                 }
                 else
                 {
-                    failedDeletions.Add(image.CloudinaryPublicId);
+                    failedDeletions.Add(image.Id);
                 }
             }
 

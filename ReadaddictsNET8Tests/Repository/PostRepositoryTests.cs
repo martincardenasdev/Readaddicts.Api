@@ -427,13 +427,13 @@ namespace ReadaddictsNET8Tests.Repository
             string content = "content update";
 
             // Act
-            var (result, postDto) = await postRepository.UpdatePostContent("1", "1", content);
+            var (result, newContent) = await postRepository.UpdatePostContent("1", "1", content);
 
             // Assert
             result.Should().BeTrue();
-            postDto.Should().NotBeNull();
-            postDto.Should().BeOfType<PostDto>();
-            postDto.Content.Should().Be(content);
+            newContent.Should().NotBeNull();
+            newContent.Should().BeOfType<string>();
+            newContent.Should().Be(content);
         }
 
         [Fact]
@@ -446,12 +446,12 @@ namespace ReadaddictsNET8Tests.Repository
             string content = "content update";
 
             // Act
-            var (result, postDto) = await postRepository.UpdatePostContent("1", "999", content);
+            var (result, newContent) = await postRepository.UpdatePostContent("1", "999", content);
 
             // Assert
             result.Should().BeFalse();
-            postDto.Should().BeOfType<PostDto>();
-            postDto.Content.Should().NotBe(content);
+            newContent.Should().BeOfType<string>();
+            newContent.Should().NotBe(content);
         }
 
         [Fact]
@@ -517,6 +517,81 @@ namespace ReadaddictsNET8Tests.Repository
             // Assert
             result.Should().BeEmpty();
             result.Should().HaveCount(0);
+        }
+
+        [Fact]
+        public async Task UpdateAll_ReturnsUpdatedNewImages()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var postRepository = new PostRepository(dbContext, _cloudinaryMock.Object);
+            var images = new FormFileCollection
+            {
+                new FormFile(new MemoryStream(Encoding.UTF8.GetBytes("This is a dummy img")), 0, 0, "Data", "dummy.jpg"),
+                new FormFile(new MemoryStream(Encoding.UTF8.GetBytes("This is a dummy img")), 0, 0, "Data", "dummy.jpg")
+            };
+
+            var tupleResultList = new List<(string imageUrl, string publicId, string result)>
+            {
+                ("FakeURL", "FakePublicId", "FakeResult"),
+                ("FakeURL2", "FakePublicId2", "FakeResult2")
+            };
+
+            _cloudinaryMock
+                .Setup(x => x.UploadMany(It.IsAny<IFormFileCollection>()))
+                .ReturnsAsync(tupleResultList);
+
+            // Act
+            var result = await postRepository.UpdateAll("1", "1", null, images, null);
+
+            // Assert
+            result.AddedImages.Should().NotBeNullOrEmpty();
+            result.AddedImages.Should().HaveCount(2);
+            result.AddedImages.Should().BeOfType<List<ImageDto>>();
+            result.AddedImages.Should().NotContainNulls();
+        }
+
+        [Fact]
+        public async Task UpdateAll_ReturnsUpdatedRemovedImages()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var postRepository = new PostRepository(dbContext, _cloudinaryMock.Object);
+
+            var imageIdsToRemove = new List<string> { "1", "2" };
+
+            var tupleResult = (deleted: imageIdsToRemove, notDeleted: Enumerable.Empty<string>());
+
+            _cloudinaryMock
+                .Setup(x => x.Destroy(It.IsAny<List<Image>>()))
+                .ReturnsAsync(tupleResult);
+
+            // Act
+            var result = await postRepository.UpdateAll("1", "1", null, null, imageIdsToRemove);
+
+            // Assert
+            result.RemovedImages.Should().NotBeNullOrEmpty();
+            result.RemovedImages.Should().HaveCount(2);
+            result.RemovedImages.Should().BeOfType<List<string>>();
+            result.RemovedImages.Should().NotContainNulls();
+        }
+
+        [Fact]
+        public async Task UpdateAll_ReturnsUpdatedContent()
+        {
+            // Arrange
+            var dbContext = await GetApplicationDbContext();
+            var postRepository = new PostRepository(dbContext, _cloudinaryMock.Object);
+
+            string content = "content update";
+
+            // Act
+            var result = await postRepository.UpdateAll("1", "1", content, null, null);
+
+            // Assert
+            result.NewContent.Should().NotBeNullOrEmpty();
+            result.NewContent.Should().BeOfType<string>();
+            result.NewContent.Should().Be(content);
         }
 
         [Fact]
