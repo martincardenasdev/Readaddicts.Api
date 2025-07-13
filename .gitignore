@@ -367,4 +367,4 @@ FodyWeavers.xsd
 /Readaddicts.Api/appsettings.Development.json
 
 # env
-/Readaddicts.Api/env
+/Readaddicts.Api/.env
