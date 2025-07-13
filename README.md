@@ -1,4 +1,4 @@
-# Readaddicts
+# Readaddicts.Api
 Social media for book lovers built with clean architecture and minimal APIs, using .NET 8 and SQL Server
 
 > [!IMPORTANT]
