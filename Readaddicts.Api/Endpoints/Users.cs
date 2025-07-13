@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace ReadaddictsNET8.Endpoints
+namespace Readaddicts.Api.Endpoints
 {
     public static class Users
     {

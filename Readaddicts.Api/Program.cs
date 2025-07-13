@@ -7,7 +7,7 @@ using Infrastructure;
 using Infrastructure.Hubs;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
-using ReadaddictsNET8.Endpoints;
+using Readaddicts.Api.Endpoints;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -34,7 +34,7 @@ builder.Services.AddIdentity<User, IdentityRole>()
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.Name = "ReadaddictsNET8";
+    options.Cookie.Name = "Readaddicts.Api";
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
     options.Cookie.SameSite = SameSiteMode.Strict;

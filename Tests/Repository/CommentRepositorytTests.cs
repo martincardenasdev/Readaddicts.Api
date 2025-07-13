@@ -7,7 +7,7 @@ using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace ReadaddictsNET8Tests.Repository
+namespace Tests.Repository
 {
     public class CommentRepositorytTests
     {

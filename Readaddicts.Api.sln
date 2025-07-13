@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReadaddictsNET8Tests", "ReadaddictsNET8Tests\ReadaddictsNET8Tests.csproj", "{459BA8EA-8365-4C98-92EF-19A9304A8044}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{459BA8EA-8365-4C98-92EF-19A9304A8044}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{5658524D-823A-4844-A89D-8BB58057009E}"
 EndProject
@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{B0E4E63B-4B10-44B8-8738-D45523CCB121}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadaddictsNET8", "ReadaddictsNET8\ReadaddictsNET8.csproj", "{BA3EB6FB-B9E5-4F80-AD4F-82D033E62B53}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Readaddicts.Api", "Readaddicts.Api\Readaddicts.Api.csproj", "{BA3EB6FB-B9E5-4F80-AD4F-82D033E62B53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

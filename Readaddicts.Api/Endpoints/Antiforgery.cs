@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace ReadaddictsNET8.Endpoints
+namespace Readaddicts.Api.Endpoints
 {
     public static class Antiforgery
     {

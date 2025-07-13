@@ -11,7 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using System.Text;
 
-namespace ReadaddictsNET8Tests.Repository
+namespace Tests.Repository
 {
     public class PostRepositoryTests
     {

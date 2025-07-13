@@ -1,0 +1,6 @@
+@Readaddicts.Api_HostAddress = http://localhost:5030
+
+GET {{Readaddicts.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

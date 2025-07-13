@@ -1,6 +1,0 @@
-@ReadaddictsNET8_HostAddress = http://localhost:5030
-
-GET {{ReadaddictsNET8_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
