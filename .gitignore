@@ -363,5 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # appsettings.json
-/ReadaddictsNET8/appsettings.json
-/ReadaddictsNET8/appsettings.Development.json
+/Readaddicts.Api/appsettings.json
+/Readaddicts.Api/appsettings.Development.json
+
+# env
+/Readaddicts.Api/env
