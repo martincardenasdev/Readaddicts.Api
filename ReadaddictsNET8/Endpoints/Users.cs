@@ -20,7 +20,6 @@ namespace ReadaddictsNET8.Endpoints
 
             users.MapPost("/register", Register);
             users.MapPost("/login", Login);
-            users.MapPost("/add-roles", AddRoles);
             users.MapPatch("/update", Update).DisableAntiforgery();
             users.MapPatch("/update-password", UpdatePassword).RequireAuthorization();
             users.MapDelete("/delete", Delete).RequireAuthorization();
@@ -55,24 +54,6 @@ namespace ReadaddictsNET8.Endpoints
 
             var errors = result.Errors.Select(error => error.Description);
 
-            return TypedResults.BadRequest(errors);
-        }
-        public static async Task<Results<Ok, BadRequest<IEnumerable<string>>>> AddRoles(RoleManager<IdentityRole> roleManager)
-        {
-            var admin = new IdentityRole("Admin");
-            var moderator = new IdentityRole("Moderator");
-            var user = new IdentityRole("User");
-
-            var result = await roleManager.CreateAsync(admin);
-            var result2 = await roleManager.CreateAsync(moderator);
-            var result3 = await roleManager.CreateAsync(user);
-
-            if (result.Succeeded && result2.Succeeded && result3.Succeeded)
-            {
-                return TypedResults.Ok();
-            }
-
-            var errors = result.Errors.Select(error => error.Description);
             return TypedResults.BadRequest(errors);
         }
         public static async Task<Results<Ok, NotFound, BadRequest<IEnumerable<string>>>> Delete(string userId, UserManager<User> userManager)
