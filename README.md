@@ -52,12 +52,12 @@ If you get problems with the certificates when trying to run the app, you can ad
 > Must install dotnet-ef tools before running these commands
 
 List all the migrations:
-```dotnet ef migrations list --project Infrastructure --startup-project ReadaddictsNET8```
+```dotnet ef migrations list --project Infrastructure --startup-project Readaddicts.Api```
 
 Define a new migration:
 ```
-dotnet ef migrations add {migration_name} --project Infrastructure  --startup-project ReadaddictsNET8 --output-dir ../Infrastructure/Data/Migrations
+dotnet ef migrations add {migration_name} --project Infrastructure  --startup-project Readaddicts.Api --output-dir ../Infrastructure/Data/Migrations
 ```
 
 Run migrations against local database:
-```dotnet ef database update --project Infrastructure  --startup-project ReadaddictsNET8```
+```dotnet ef database update --project Infrastructure  --startup-project Readaddicts.Api```
