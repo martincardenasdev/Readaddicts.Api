@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace ReadaddictsNET8.Endpoints
+namespace Readaddicts.Api.Endpoints
 {
     public static class Posts
     {

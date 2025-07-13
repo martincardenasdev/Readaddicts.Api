@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -142,6 +143,86 @@ namespace Infrastructure
             builder.Entity<UserGroup>().Property(ug => ug.Id).HasDefaultValueSql("NEWID()");
             builder.Entity<Message>().Property(m => m.Id).HasDefaultValueSql("NEWID()");
             builder.Entity<Tier>().Property(t => t.Id).HasDefaultValueSql("NEWID()");
+            
+            var adminUserGuid = Guid.NewGuid().ToString();
+            
+            builder.Entity<User>()
+                .HasData(
+                    new User
+                    {
+                        Id = adminUserGuid,
+                        UserName = "Admin",
+                        NormalizedUserName = "ADMIN",
+                        Email = "admin@example.com", 
+                        NormalizedEmail = "ADMIN@EXAMPLE.COM",
+                        EmailConfirmed = true,
+                        PhoneNumberConfirmed = false,
+                        TwoFactorEnabled = false,
+                        LockoutEnabled = false,
+                        AccessFailedCount = 0,
+                        SecurityStamp = "ef38f54b-3233-4f82-9db8-0c2b21a0dcd2",
+                        ConcurrencyStamp = "f2027726-9e34-4db5-a69a-b02dc12682db",
+                        PasswordHash = new PasswordHasher<User>().HashPassword(new User(), ")4}CZ?57AjXG"),
+                        LastLogin = DateTimeOffset.UtcNow
+                    });
+
+            var adminRoleGuid = Guid.NewGuid().ToString();
+
+            builder.Entity<IdentityRole>().HasData(
+                new IdentityRole
+                {
+                    Id = adminRoleGuid,
+                    Name = "Admin",
+                    NormalizedName = "ADMIN",
+                },
+                new IdentityRole
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Moderator",
+                    NormalizedName = "MODERATOR",
+                },
+                new IdentityRole
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "User",
+                    NormalizedName = "USER",
+                }
+                );
+
+            builder.Entity<IdentityUserRole<string>>().HasData(
+                new IdentityUserRole<string> { UserId = adminUserGuid, RoleId = adminRoleGuid}
+                );
+
+            var testGroupGuid = Guid.NewGuid().ToString();
+
+            builder.Entity<Group>().HasData(
+                new Group
+                {
+                    Id = testGroupGuid,
+                    Name = "Test group",
+                    Description = "This is a test group",
+                    CreatorId = adminUserGuid,
+                    Created = DateTimeOffset.UtcNow
+                }
+                );
+
+            builder.Entity<Post>().HasData(
+                new Post
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = adminUserGuid,
+                    Created = DateTimeOffset.UtcNow,
+                    Content = "Welcome to my app"
+                },
+                new Post
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = adminUserGuid,
+                    Created = DateTimeOffset.UtcNow,
+                    Content = "Welcome to my group",
+                    GroupId = testGroupGuid
+                }
+                );
         }
     }
 }

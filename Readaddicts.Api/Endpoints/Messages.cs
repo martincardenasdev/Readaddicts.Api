@@ -4,7 +4,7 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Claims;
 
-namespace ReadaddictsNET8.Endpoints
+namespace Readaddicts.Api.Endpoints
 {
     public static class Messages
     {
