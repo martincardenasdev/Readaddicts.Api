@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Extensions;
 using Application.Interfaces;
 using CloudinaryDotNet;
 using Domain.Entities;
@@ -7,7 +8,7 @@ using Infrastructure;
 using Infrastructure.Hubs;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
-using Readaddicts.Api.Endpoints;
+using System.Reflection;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var builder = WebApplication.CreateBuilder(args);
@@ -77,13 +78,13 @@ builder.Services.AddSignalR(options =>
 
 var app = builder.Build();
 
-// Add endpoints
-app.AddAntiForgeryEndpoints();
-app.AddPostsEndpoints();
-app.AddUsersEndpoints();
-app.AddCommentsEndpoints();
-app.AddMessagesEndpoints();
-app.AddGroupsEndpoints();
+app.AddMinimalEndpoints();
+
+//app.AddAntiForgeryEndpoints();
+//app.AddUsersEndpoints();
+//app.AddCommentsEndpoints();
+//app.AddMessagesEndpoints();
+//app.AddGroupsEndpoints();
 
 // Add SignalR endpoints
 app.MapHub<ChatHub>("/chatHub");

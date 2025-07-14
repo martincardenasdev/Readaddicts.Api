@@ -8,22 +8,24 @@ using System.Security.Claims;
 
 namespace Readaddicts.Api.Endpoints
 {
+    internal class RegisterGroupsEndpoints : IMinimalEndpoint
+    {
+        public void MapRoutes(IEndpointRouteBuilder routeBuilder)
+        {
+            var groups = routeBuilder.MapGroup("/api/v1/groups");
+
+            groups.MapGet("/all", Groups.GetGroups);
+            groups.MapGet("/{id}", Groups.GetGroup);
+            groups.MapGet("/{id}/posts", Groups.GetPostsByGroup).RequireAuthorization();
+            groups.MapPost("/create", Groups.CreateGroup).RequireAuthorization().DisableAntiforgery();
+            groups.MapPatch("/{id}", Groups.UpdateGroup).RequireAuthorization();
+            groups.MapDelete("/{id}", Groups.DeleteGroup).RequireAuthorization();
+            groups.MapPost("/{id}/join", Groups.JoinGroup).RequireAuthorization();
+            groups.MapPost("/{id}/leave", Groups.LeaveGroup).RequireAuthorization();
+        }
+    }
     public static class Groups
     {
-        public static void AddGroupsEndpoints(this IEndpointRouteBuilder routes)
-        {
-            RouteGroupBuilder groups = routes.MapGroup("/api/v1/groups");
-
-            groups.MapGet("/all", GetGroups);
-            groups.MapGet("{id}", GetGroup);
-            groups.MapGet("{id}/posts", GetPostsByGroup).RequireAuthorization();
-            groups.MapPost("/create", CreateGroup).RequireAuthorization().DisableAntiforgery();
-            groups.MapPatch("{id}", UpdateGroup).RequireAuthorization();
-            groups.MapDelete("{id}", DeleteGroup).RequireAuthorization();
-            groups.MapPost("{id}/join", JoinGroup).RequireAuthorization();
-            groups.MapPost("{id}/leave", LeaveGroup).RequireAuthorization();
-        }
-
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
         public static async Task<Ok<DataCountPagesDto<IEnumerable<GroupDto>>>> GetGroups([FromServices] IGroupRepository groupRepository, int page, int limit)
         {

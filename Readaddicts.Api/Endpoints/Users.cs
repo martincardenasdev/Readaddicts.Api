@@ -12,27 +12,29 @@ using System.Security.Claims;
 
 namespace Readaddicts.Api.Endpoints
 {
+    internal class RegisterUsersEndpoints : IMinimalEndpoint
+    {
+        public void MapRoutes(IEndpointRouteBuilder routeBuilder)
+        {
+            var users = routeBuilder.MapGroup("/api/v1/users");
+
+            users.MapPost("/register", Users.Register);
+            users.MapPost("/login", Users.Login);
+            users.MapPatch("/update", Users.Update).DisableAntiforgery();
+            users.MapPatch("/update-password", Users.UpdatePassword).RequireAuthorization();
+            users.MapDelete("/delete", Users.Delete).RequireAuthorization();
+            users.MapGet("/{username}", Users.GetUser);
+            users.MapGet("/id/{id}", Users.GetUserById);
+            users.MapGet("/current", Users.GetCurrentUser).RequireAuthorization();
+            users.MapGet("/all", Users.GetUsers);
+            users.MapPost("/logout", Users.Logout).RequireAuthorization();
+            users.MapPost("/refresh", Users.UpdateLastLogin).RequireAuthorization();
+            users.MapGet("/{username}/posts", Users.GetPostsByUser);
+            users.MapGet("/{username}/comments", Users.GetCommentsByUser);
+        }
+    }
     public static class Users
     {
-        public static void AddUsersEndpoints(this IEndpointRouteBuilder routes)
-        {
-            RouteGroupBuilder users = routes.MapGroup("/api/v1/users");
-
-            users.MapPost("/register", Register);
-            users.MapPost("/login", Login);
-            users.MapPatch("/update", Update).DisableAntiforgery();
-            users.MapPatch("/update-password", UpdatePassword).RequireAuthorization();
-            users.MapDelete("/delete", Delete).RequireAuthorization();
-            users.MapGet("/{username}", GetUser);
-            users.MapGet("/id/{id}", GetUserById);
-            users.MapGet("/current", GetCurrentUser).RequireAuthorization();
-            users.MapGet("/all", GetUsers);
-            users.MapPost("/logout", Logout).RequireAuthorization();
-            users.MapPost("/refresh", UpdateLastLogin).RequireAuthorization();
-            users.MapGet("/{username}/posts", GetPostsByUser);
-            users.MapGet("/{username}/comments", GetCommentsByUser);
-        }
-
         public static async Task<Results<Ok<User>, BadRequest<IEnumerable<string>>>> Register(User user, string roleName, UserManager<User> userManager, SignInManager<User> signInManager)
         {
             var newUser = new User

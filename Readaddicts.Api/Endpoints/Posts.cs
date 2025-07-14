@@ -9,23 +9,26 @@ using System.Security.Claims;
 
 namespace Readaddicts.Api.Endpoints
 {
+    internal class RegisterPostsEndpoints : IMinimalEndpoint
+    {
+        public void MapRoutes(IEndpointRouteBuilder routeBuilder)
+        {
+            var posts = routeBuilder.MapGroup("/api/v1/posts");
+
+            posts.MapGet("/all", Posts.GetAllPosts);
+            posts.MapGet("/{id}", Posts.GetPost);
+            posts.MapPost("/create", Posts.CreatePost).RequireAuthorization().DisableAntiforgery();
+            posts.MapDelete("/{id}", Posts.DeletePost).RequireAuthorization();
+            posts.MapPatch("/{id}", Posts.UpdatePostContent).RequireAuthorization();
+            posts.MapPatch("/{id}/images/add", Posts.AddImagesToPost).RequireAuthorization().DisableAntiforgery();
+            posts.MapPatch("/{id}/images/delete", Posts.DeleteImageFromPost).RequireAuthorization();
+            posts.MapPatch("/{id}/update", Posts.UpdateAll).RequireAuthorization().DisableAntiforgery();
+            posts.MapGet("/{id}/comments", Posts.GetPostComments);
+        }
+    }
+
     public static class Posts
     {
-        public static void AddPostsEndpoints(this IEndpointRouteBuilder routes)
-        {
-            RouteGroupBuilder posts = routes.MapGroup("/api/v1/posts");
-
-            posts.MapGet("/all", GetAllPosts);
-            posts.MapGet("/{id}", GetPost);
-            posts.MapPost("/create", CreatePost).RequireAuthorization().DisableAntiforgery();
-            posts.MapDelete("/{id}", DeletePost).RequireAuthorization();
-            posts.MapPatch("/{id}", UpdatePostContent).RequireAuthorization();
-            posts.MapPatch("/{id}/images/add", AddImagesToPost).RequireAuthorization().DisableAntiforgery();
-            posts.MapPatch("/{id}/images/delete", DeleteImageFromPost).RequireAuthorization();
-            posts.MapPatch("/{id}/update", UpdateAll).RequireAuthorization().DisableAntiforgery();
-            posts.MapGet("/{id}/comments", GetPostComments);
-        }
-
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
 
         public static async Task<Ok<DataCountPagesDto<List<PostDto>>>> GetAllPosts(IPostRepository postRepository, int page, int limit)

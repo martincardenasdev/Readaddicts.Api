@@ -6,20 +6,22 @@ using System.Security.Claims;
 
 namespace Readaddicts.Api.Endpoints
 {
+    internal class RegisterMessagesEndpoints : IMinimalEndpoint
+    {
+        public void MapRoutes(IEndpointRouteBuilder routeBuilder)
+        {
+            var messages = routeBuilder.MapGroup("/api/v1/messages");
+
+            messages.MapPost("send/{receiverId}", Messages.CreateMessage).RequireAuthorization(); // Dont actually hit this. Use SignalR instead
+            messages.MapGet("", Messages.GetUserMessages).RequireAuthorization();
+            messages.MapGet("conversation/{receiverId}", Messages.GetConversation).RequireAuthorization();
+            messages.MapGet("recent-chats", Messages.GetRecentChats).RequireAuthorization();
+            messages.MapPatch("read-messages/{senderId}", Messages.ReadMessages).RequireAuthorization();
+            messages.MapGet("notification-count", Messages.GetMessageNotificationCount).RequireAuthorization();
+        }
+    }
     public static class Messages
     {
-        public static void AddMessagesEndpoints(this IEndpointRouteBuilder routes)
-        {
-            RouteGroupBuilder messages = routes.MapGroup("/api/v1/messages");
-
-            messages.MapPost("send/{receiverId}", CreateMessage).RequireAuthorization(); // Dont actually hit this. Use SignalR instead
-            messages.MapGet("", GetUserMessages).RequireAuthorization();
-            messages.MapGet("conversation/{receiverId}", GetConversation).RequireAuthorization();
-            messages.MapGet("recent-chats", GetRecentChats).RequireAuthorization();
-            messages.MapPatch("read-messages/{senderId}", ReadMessages).RequireAuthorization();
-            messages.MapGet("notification-count", GetMessageNotificationCount).RequireAuthorization();
-        }
-
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
         public static async Task<Results<Ok<MessageDto>, BadRequest>> CreateMessage(IMessageRepository messageRepository, ClaimsPrincipal user, string receiverId, string message)
         {

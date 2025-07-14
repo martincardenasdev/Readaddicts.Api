@@ -5,18 +5,20 @@ using System.Security.Claims;
 
 namespace Readaddicts.Api.Endpoints
 {
+    internal class  RegisterCommentsEndpoints : IMinimalEndpoint
+    {
+        public void MapRoutes(IEndpointRouteBuilder routeBuilder)
+        {
+            var comments = routeBuilder.MapGroup("/api/v1/comments");
+
+            comments.MapGet("/{id}", Comments.GetComment);
+            comments.MapPost("/", Comments.CreateComment).RequireAuthorization();
+            comments.MapPatch("/{id}", Comments.UpdateComment).RequireAuthorization();
+            comments.MapDelete("/{id}", Comments.DeleteComment).RequireAuthorization();
+        }   
+    }
     public static class Comments
     {
-        public static void AddCommentsEndpoints(this IEndpointRouteBuilder routes)
-        {
-            RouteGroupBuilder comments = routes.MapGroup("/api/v1/comments");
-
-            comments.MapGet("/{id}", GetComment);
-            comments.MapPost("/", CreateComment).RequireAuthorization();
-            comments.MapPatch("/{id}", UpdateComment).RequireAuthorization();
-            comments.MapDelete("/{id}", DeleteComment).RequireAuthorization();
-        }
-
         private static string GetUserId(ClaimsPrincipal user) => user.FindFirstValue(ClaimTypes.NameIdentifier);
         public static async Task<Results<Ok<CommentDto>, NotFound>> GetComment(ICommentRepository commentRepository, string id)
         {
